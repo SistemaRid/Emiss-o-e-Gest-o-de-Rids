@@ -2,7 +2,7 @@
 <html lang="pt-BR">
  <head>
   <meta charset="UTF-8">
-  <title>Sistema de Emissão e Gestão de RID's</title>
+  <title>Sistema de Emiss��o e Gestão de RID's</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"><!-- Tailwind via CDN -->
   <script src="https://cdn.tailwindcss.com"></script><!-- Firebase SDK v9+ (modular) -->
   <script type="module">
@@ -186,22 +186,31 @@
          </div>
         </section>
         <section class="space-y-3">
-         <div class="flex items-center justify-between">
-          <h2 class="text-base sm:text-lg font-semibold text-[#2c2c2c]">Ranking de Emissões</h2>
-          <div class="flex items-center gap-2"><select id="ranking-mes" class="px-3 py-1.5 rounded-lg border border-[#b0b0b0] bg-white text-xs"> <option value="todos">Todos os meses</option> <option value="0">Janeiro</option> <option value="1">Fevereiro</option> <option value="2">Março</option> <option value="3">Abril</option> <option value="4">Maio</option> <option value="5">Junho</option> <option value="6">Julho</option> <option value="7">Agosto</option> <option value="8">Setembro</option> <option value="9">Outubro</option> <option value="10">Novembro</option> <option value="11">Dezembro</option> </select> <input id="ranking-ano" type="number" min="2020" max="2099" placeholder="Ano" class="w-20 px-3 py-1.5 rounded-lg border border-[#b0b0b0] bg-white text-xs">
+         <h2 class="text-base sm:text-lg font-semibold text-[#2c2c2c]">Ranking de Emissões</h2>
+         <div class="rounded-2xl bg-white border border-[#b0b0b0] overflow-hidden">
+          <div class="px-4 py-3 border-b border-[#b0b0b0] flex items-center justify-between gap-2">
+           <h3 class="text-sm font-semibold text-[#2c2c2c]">Top 3 Emissores</h3>
+           <div class="flex items-center gap-2"><select id="ranking-mes" class="px-3 py-1.5 rounded-lg border border-[#b0b0b0] bg-white text-xs"> <option value="todos">Todos os meses</option> <option value="0">Janeiro</option> <option value="1">Fevereiro</option> <option value="2">Março</option> <option value="3">Abril</option> <option value="4">Maio</option> <option value="5">Junho</option> <option value="6">Julho</option> <option value="7">Agosto</option> <option value="8">Setembro</option> <option value="9">Outubro</option> <option value="10">Novembro</option> <option value="11">Dezembro</option> </select> <input id="ranking-ano" type="number" min="2020" max="2099" placeholder="Ano" class="w-20 px-3 py-1.5 rounded-lg border border-[#b0b0b0] bg-white text-xs">
+           </div>
           </div>
-         </div>
-         <div id="ranking-list" class="rounded-2xl bg-white border border-[#b0b0b0] overflow-hidden">
-          <div class="px-5 py-8 text-center">
-           <p class="text-sm text-[#5a5a5a]">Nenhum dado disponível</p>
+          <div id="ranking-list" class="max-h-[340px] overflow-y-auto">
+           <div class="px-5 py-8 text-center">
+            <p class="text-sm text-[#5a5a5a]">Nenhum dado disponível</p>
+           </div>
           </div>
          </div>
         </section>
        </div><!-- RIDs Section -->
        <div id="admin-rids-section" class="hidden max-w-6xl mx-auto px-4 py-5 space-y-5">
-        <div class="flex items-center justify-between">
-         <h2 class="text-lg font-semibold">Todos os RIDs</h2>
-         <div class="flex gap-2"><input id="search-rids" type="text" placeholder="Buscar..." class="px-3 py-2 rounded-lg border border-[#b0b0b0] text-sm"> <select id="filter-status" class="px-3 py-2 rounded-lg border border-[#b0b0b0] text-sm"> <option value="todos">Todos</option> <option value="CORRIGIDO">Corrigido</option> <option value="VENCIDO">Vencido</option> <option value="EM_ANDAMENTO">Em Andamento</option> </select> <button id="btn-emitir-rid-admin" class="px-4 py-2 rounded-lg bg-[#ffd57a] hover:bg-[#ffeab8] font-semibold">Emitir RID</button>
+        <div class="flex flex-col gap-3">
+         <div class="flex items-center justify-between">
+          <h2 class="text-lg font-semibold">Todos os RIDs</h2>
+          <div class="flex items-center gap-2"><button id="btn-toggle-filtros" class="px-3 py-2 rounded-lg border border-[#b0b0b0] hover:bg-[#ece5df] transition-colors flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+            </svg><span class="text-sm font-semibold">Filtros</span> </button> <button id="btn-emitir-rid-admin" class="px-4 py-2 rounded-lg bg-[#ffd57a] hover:bg-[#ffeab8] font-semibold">Emitir RID</button>
+          </div>
+         </div>
+         <div id="filtros-container" class="hidden flex gap-2 flex-wrap"><input id="search-rids" type="text" placeholder="Buscar..." class="px-3 py-2 rounded-lg border border-[#b0b0b0] text-sm"> <select id="filter-status" class="px-3 py-2 rounded-lg border border-[#b0b0b0] text-sm"> <option value="todos">Todos os status</option> <option value="CORRIGIDO">Corrigido</option> <option value="VENCIDO">Vencido</option> <option value="EM ANDAMENTO">Em Andamento</option> </select> <select id="filter-mes-rids" class="px-3 py-2 rounded-lg border border-[#b0b0b0] text-sm"> <option value="todos">Todos os meses</option> <option value="0">Janeiro</option> <option value="1">Fevereiro</option> <option value="2">Março</option> <option value="3">Abril</option> <option value="4">Maio</option> <option value="5">Junho</option> <option value="6">Julho</option> <option value="7">Agosto</option> <option value="8">Setembro</option> <option value="9">Outubro</option> <option value="10">Novembro</option> <option value="11">Dezembro</option> </select> <input id="filter-ano-rids" type="number" min="2020" max="2099" placeholder="Ano" class="w-24 px-3 py-2 rounded-lg border border-[#b0b0b0] text-sm">
          </div>
         </div>
         <div id="all-rids-list" class="space-y-3">
@@ -287,7 +296,7 @@
       <div class="flex-1 overflow-auto">
        <div class="max-w-6xl mx-auto px-4 py-5 space-y-5">
         <div class="flex items-center justify-between">
-         <h2 class="text-lg font-semibold">Minhas RID's</h2><button id="btn-emitir-rid" class="px-4 py-2.5 rounded-xl bg-[#ffd57a] hover:bg-[#ffeab8] font-semibold">Emitir Novo RID</button>
+         <h2 class="text-lg font-semibold">Meus RID's</h2><button id="btn-emitir-rid" class="px-4 py-2.5 rounded-xl bg-[#ffd57a] hover:bg-[#ffeab8] font-semibold">Emitir Novo RID</button>
         </div>
         <div id="func-rids-list" class="space-y-3">
          <div class="rounded-2xl bg-white border border-[#b0b0b0] px-5 py-8 text-center">
@@ -460,7 +469,7 @@
       <div class="grid grid-cols-2 gap-4">
        <div><label for="edit-data-conclusao" class="block text-sm font-medium mb-1.5">Data de Conclusão</label> <input id="edit-data-conclusao" type="date" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]">
        </div>
-       <div><label for="edit-status-rid" class="block text-sm font-medium mb-1.5">Status</label> <select id="edit-status-rid" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]"> <option value="CORRIGIDO">CORRIGIDO</option> <option value="VENCIDO">VENCIDO</option> <option value="EM_ANDAMENTO">EM ANDAMENTO</option> </select>
+       <div><label for="edit-status-rid" class="block text-sm font-medium mb-1.5">Status</label> <select id="edit-status-rid" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]"> <option value="CORRIGIDO">CORRIGIDO</option> <option value="VENCIDO">VENCIDO</option> <option value="EM ANDAMENTO">EM ANDAMENTO</option> </select>
        </div>
       </div>
       <div id="editar-message" class="text-xs min-h-[1.25rem]"></div>
@@ -470,7 +479,7 @@
     </div>
    </div>
    <footer class="w-full flex-shrink-0 bg-[#d6d6d4] border-t border-[#b0b0b0]">
-    <div class="max-w-6xl mx-auto px-4 py-2 text-center text-[11px] text-[#5a5a5a]"><span>© J. DEMITO | Todos os direitos reservados. Desenvolvido por Juan Carlos</span>
+    <div class="max-w-6xl mx-auto px-4 py-2 text-center text-[11px] text-[#5a5a5a]"><span>�� J. DEMITO | Todos os direitos reservados. Desenvolvido por Juan Carlos</span>
     </div>
    </footer>
   </main>
@@ -600,7 +609,7 @@
 
   function updateAdminStats() {
     const total = allRidsData.length;
-    const andamento = allRidsData.filter(r => r.status === 'EM_ANDAMENTO').length;
+    const andamento = allRidsData.filter(r => r.status === 'EM ANDAMENTO').length;
     const vencidos = allRidsData.filter(r => r.status === 'VENCIDO').length;
     const corrigidos = allRidsData.filter(r => r.status === 'CORRIGIDO').length;
 
@@ -654,13 +663,35 @@
     container.innerHTML = `
       <div class="divide-y divide-[#b0b0b0]">
         ${ranking.map((item, index) => {
-          const medalha = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}º`;
+          let medalhaIcon = '';
+          let corMedalha = '';
+          
+          if (index === 0) {
+            corMedalha = '#ffd700'; // Ouro
+            medalhaIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-7 h-7" fill="none" stroke="${corMedalha}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="5"></circle>
+              <path d="M8.21 13.89L7 23l5-3 5 3-1.21-9.11"></path>
+            </svg>`;
+          } else if (index === 1) {
+            corMedalha = '#c0c0c0'; // Prata
+            medalhaIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-7 h-7" fill="none" stroke="${corMedalha}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="5"></circle>
+              <path d="M8.21 13.89L7 23l5-3 5 3-1.21-9.11"></path>
+            </svg>`;
+          } else if (index === 2) {
+            corMedalha = '#cd7f32'; // Bronze
+            medalhaIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-7 h-7" fill="none" stroke="${corMedalha}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="5"></circle>
+              <path d="M8.21 13.89L7 23l5-3 5 3-1.21-9.11"></path>
+            </svg>`;
+          }
+          
           const destaque = index < 3 ? 'bg-[#ffd57a]/10' : '';
           
           return `
             <div class="px-5 py-3 flex items-center justify-between gap-4 ${destaque}">
               <div class="flex items-center gap-3 flex-1">
-                <span class="text-lg font-bold w-8 text-center">${medalha}</span>
+                <div class="w-8 flex items-center justify-center">${medalhaIcon}</div>
                 <p class="text-sm font-semibold text-[#2c2c2c]">${item.nome}</p>
               </div>
               <div class="flex items-center gap-2">
@@ -720,13 +751,30 @@
   function renderAllRids() {
     const searchTerm = document.getElementById('search-rids')?.value.toLowerCase() || '';
     const statusFilter = document.getElementById('filter-status')?.value || 'todos';
+    const mesSelecionado = document.getElementById('filter-mes-rids')?.value;
+    const anoSelecionado = document.getElementById('filter-ano-rids')?.value;
     
     let filtered = allRidsData;
     
+    // Filtrar por status
     if (statusFilter !== 'todos') {
       filtered = filtered.filter(r => r.status === statusFilter);
     }
     
+    // Filtrar por mês e ano
+    if (mesSelecionado !== 'todos' || anoSelecionado) {
+      filtered = filtered.filter(rid => {
+        const dataEmissao = rid.data_criacao?.toDate();
+        if (!dataEmissao) return false;
+        
+        const mesMatch = mesSelecionado === 'todos' || dataEmissao.getMonth() === parseInt(mesSelecionado);
+        const anoMatch = !anoSelecionado || dataEmissao.getFullYear() === parseInt(anoSelecionado);
+        
+        return mesMatch && anoMatch;
+      });
+    }
+    
+    // Filtrar por busca
     if (searchTerm) {
       filtered = filtered.filter(r => 
         r.emitente?.toLowerCase().includes(searchTerm) ||
@@ -1124,7 +1172,7 @@
             <select id="edit-status" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df] text-sm">
               <option value="CORRIGIDO" ${rid.status === 'CORRIGIDO' ? 'selected' : ''}>CORRIGIDO</option>
               <option value="VENCIDO" ${rid.status === 'VENCIDO' ? 'selected' : ''}>VENCIDO</option>
-              <option value="EM_ANDAMENTO" ${rid.status === 'EM_ANDAMENTO' ? 'selected' : ''}>EM ANDAMENTO</option>
+              <option value="EM ANDAMENTO" ${rid.status === 'EM ANDAMENTO' ? 'selected' : ''}>EM ANDAMENTO</option>
             </select>
           </div>
           
@@ -1280,8 +1328,14 @@
         document.getElementById('btn-nav-relatorios').addEventListener('click', () => showAdminSection('relatorios'));
         
         document.getElementById('btn-exportar-excel').addEventListener('click', exportarParaExcel);
+        document.getElementById('btn-toggle-filtros').addEventListener('click', () => {
+          const filtrosContainer = document.getElementById('filtros-container');
+          filtrosContainer.classList.toggle('hidden');
+        });
         document.getElementById('search-rids')?.addEventListener('input', renderAllRids);
         document.getElementById('filter-status')?.addEventListener('change', renderAllRids);
+        document.getElementById('filter-mes-rids')?.addEventListener('change', renderAllRids);
+        document.getElementById('filter-ano-rids')?.addEventListener('input', renderAllRids);
         document.getElementById('search-funcionarios')?.addEventListener('input', renderFuncionarios);
         document.getElementById('filtro-mes-relatorio')?.addEventListener('change', renderRelatoriosTable);
         document.getElementById('filtro-ano-relatorio')?.addEventListener('input', renderRelatoriosTable);
@@ -1713,7 +1767,7 @@
         designado_para_uid: adminUid,
         observacao_designacao: observacao,
         data_estimada: dataEstimada,
-        status: 'EM_ANDAMENTO',
+        status: 'EM ANDAMENTO',
         data_designacao: serverTimestamp()
       });
 
@@ -1835,5 +1889,5 @@
     }
   });
 </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9a7fa60b67c36e30',t:'MTc2NDcyOTA5NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9a7fbe1287b180fe',t:'MTc2NDczMDA3OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
