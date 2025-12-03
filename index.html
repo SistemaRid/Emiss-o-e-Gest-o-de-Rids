@@ -1,0 +1,1840 @@
+<!doctype html>
+<html lang="pt-BR">
+ <head>
+  <meta charset="UTF-8">
+  <title>Sistema de Emissão e Gestão de RID's</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"><!-- Tailwind via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script><!-- Firebase SDK v9+ (modular) -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where, orderBy, onSnapshot, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDAcuwo5FZBs5013klfSMfWkQZbFjqYpbw",
+      authDomain: "novo-rid-dezembro.firebaseapp.com",
+      projectId: "novo-rid-dezembro",
+      storageBucket: "novo-rid-dezembro.firebasestorage.app",
+      messagingSenderId: "629184938088",
+      appId: "1:629184938088:web:3821e7ea07897ae655fbdd"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    window.firebaseAuth = auth;
+    window.firebaseDb = db;
+    window.firebaseModules = {
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
+      onAuthStateChanged,
+      signOut,
+      collection,
+      addDoc,
+      getDocs,
+      updateDoc,
+      deleteDoc,
+      doc,
+      query,
+      where,
+      orderBy,
+      onSnapshot,
+      serverTimestamp
+    };
+
+    window.firebaseReady = true;
+    window.dispatchEvent(new Event('firebaseReady'));
+  </script>
+  <style>
+    body {
+      box-sizing: border-box;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+    }
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: #b0b0b0 transparent;
+    }
+    *::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    *::-webkit-scrollbar-thumb {
+      background-color: #b0b0b0;
+      border-radius: 999px;
+    }
+    *::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    :focus-visible {
+      outline: 2px solid #ffd57a;
+      outline-offset: 2px;
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="/_sdk/element_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="w-full h-full bg-[#ece5df]">
+  <main id="app-root" class="w-full h-full flex flex-col bg-[#ece5df] text-[#2c2c2c] font-sans">
+   <section id="view-container" class="w-full flex-1 flex items-stretch justify-center overflow-hidden"><!-- LOGIN VIEW -->
+    <div id="view-login" class="w-full h-full flex items-center justify-center px-4 py-6">
+     <div class="w-full max-w-md">
+      <div class="rounded-2xl bg-white border border-[#b0b0b0] shadow-xl px-6 py-8 space-y-6">
+       <div class="text-center space-y-2">
+        <div class="w-16 h-16 mx-auto rounded-2xl bg-[#ffd57a] flex items-center justify-center shadow-lg">
+         <svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 24 24" class="w-9 h-9 text-[#2c2c2c]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path> <path d="M14 2v6h6"></path> <path d="M16 13H8"></path> <path d="M16 17H8"></path> <path d="M10 9H8"></path>
+         </svg>
+        </div>
+        <h1 class="text-2xl font-bold text-[#2c2c2c]">Sistema de Gestão de RID's</h1>
+        <p class="text-sm text-[#5a5a5a]">Faça login para acessar o sistema</p>
+       </div>
+       <form id="login-form" class="space-y-4">
+        <div class="space-y-1.5"><label for="email" class="block text-sm font-medium text-[#2c2c2c]"> CPF ou E-mail </label> <input id="email" type="text" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df] text-sm text-[#2c2c2c] placeholder-[#5a5a5a] focus:border-[#ffd57a] focus:ring-2 focus:ring-[#ffd57a]/40 transition-colors" placeholder="Digite seu CPF ou e-mail" required>
+        </div>
+        <div class="space-y-1.5"><label for="senha" class="block text-sm font-medium text-[#2c2c2c]"> Senha </label> <input id="senha" type="password" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df] text-sm text-[#2c2c2c] placeholder-[#5a5a5a] focus:border-[#ffd57a] focus:ring-2 focus:ring-[#ffd57a]/40 transition-colors" placeholder="Digite sua senha" required>
+        </div>
+        <div id="login-message" class="text-sm min-h-[1.5rem] text-center font-medium"></div>
+        <div class="space-y-3 pt-2"><button id="btn-entrar" type="submit" class="w-full px-6 py-3 rounded-xl text-sm font-semibold text-[#2c2c2c] bg-[#ffd57a] hover:bg-[#ffeab8] transition-colors shadow-md disabled:opacity-70 disabled:cursor-not-allowed"> <span id="btn-entrar-text">Entrar</span> </button> <button id="btn-cadastrar" type="button" class="w-full px-6 py-3 rounded-xl text-sm font-semibold text-[#2c2c2c] border border-[#b0b0b0] bg-transparent hover:bg-[#d6d6d4] transition-colors"> Criar Nova Conta </button>
+        </div>
+       </form>
+      </div>
+     </div>
+    </div><!-- ADMIN VIEW -->
+    <div id="view-admin" class="hidden w-full h-full">
+     <div class="w-full h-full flex flex-col">
+      <header class="flex-shrink-0 bg-[#d6d6d4] border-b border-[#b0b0b0]">
+       <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+         <div class="w-9 h-9 rounded-xl bg-[#ffd57a] flex items-center justify-center shadow-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 24 24" class="w-5 h-5 text-[#2c2c2c]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path> <path d="M14 2v6h6"></path> <path d="M16 13H8"></path> <path d="M16 17H8"></path> <path d="M10 9H8"></path>
+          </svg>
+         </div>
+         <div>
+          <p class="text-sm font-semibold tracking-wide text-[#2c2c2c] uppercase">Sistema de emissão e gestão de RID's</p>
+          <p class="text-xs text-[#5a5a5a]">Painel do Administrador</p>
+         </div>
+        </div>
+        <div class="flex items-center gap-2"><button id="btn-notificacoes-admin" type="button" class="relative w-10 h-10 rounded-lg hover:bg-[#ece5df] transition-colors flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 24 24" class="w-5 h-5 text-[#2c2c2c]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path> <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg><span id="badge-notif-admin" class="hidden absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">0</span> </button>
+         <div class="relative"><button id="btn-menu-admin" type="button" class="w-10 h-10 rounded-lg hover:bg-[#ece5df] transition-colors flex flex-col items-center justify-center gap-1.5"> <span class="w-5 h-0.5 bg-[#2c2c2c] rounded-full"></span> <span class="w-5 h-0.5 bg-[#2c2c2c] rounded-full"></span> <span class="w-5 h-0.5 bg-[#2c2c2c] rounded-full"></span> </button>
+          <div id="menu-dropdown-admin" class="hidden absolute right-0 top-12 w-40 bg-white border border-[#b0b0b0] rounded-xl shadow-lg overflow-hidden z-50"><button id="btn-logout-admin" type="button" class="w-full px-4 py-3 text-left text-sm font-semibold text-[#2c2c2c] hover:bg-[#ece5df] transition-colors"> Sair </button>
+          </div>
+         </div>
+        </div>
+       </div>
+       <nav class="border-t border-[#b0b0b0] bg-[#d6d6d4]">
+        <div class="max-w-6xl mx-auto px-2 sm:px-4">
+         <ul class="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm overflow-x-auto py-2">
+          <li><button id="btn-nav-dashboard" type="button" class="px-3 sm:px-4 py-1.5 rounded-full bg-[#ffd57a] text-[#2c2c2c] font-semibold shadow-sm whitespace-nowrap"> Dashboard </button></li>
+          <li><button id="btn-nav-rids" type="button" class="px-3 sm:px-4 py-1.5 rounded-full text-[#2c2c2c] border border-transparent hover:border-[#b0b0b0] hover:bg-[#ece5df] whitespace-nowrap"> RIDs </button></li>
+          <li><button id="btn-nav-funcionarios" type="button" class="px-3 sm:px-4 py-1.5 rounded-full text-[#2c2c2c] border border-transparent hover:border-[#b0b0b0] hover:bg-[#ece5df] whitespace-nowrap"> Funcionários </button></li>
+          <li><button id="btn-nav-relatorios" type="button" class="px-3 sm:px-4 py-1.5 rounded-full text-[#2c2c2c] border border-transparent hover:border-[#b0b0b0] hover:bg-[#ece5df] whitespace-nowrap"> Relatórios </button></li>
+         </ul>
+        </div>
+       </nav>
+      </header>
+      <div class="flex-1 overflow-auto"><!-- Dashboard Section -->
+       <div id="admin-dashboard-section" class="max-w-6xl mx-auto px-4 py-5 sm:py-6 space-y-6">
+        <section class="space-y-3">
+         <h2 class="text-base sm:text-lg font-semibold text-[#2c2c2c]">Visão geral</h2>
+         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <article class="rounded-2xl bg-white border border-[#b0b0b0] px-5 py-5 flex items-center justify-between gap-4">
+           <div class="flex items-center gap-3 flex-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 24 24" class="w-8 h-8 text-[#38bdf8]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path> <path d="M14 2v6h6"></path> <path d="M16 13H8"></path> <path d="M16 17H8"></path> <path d="M10 9H8"></path>
+            </svg>
+            <p class="text-sm font-semibold text-[#2c2c2c]">Total de RIDs</p>
+           </div>
+           <p id="stat-rids-total" class="text-3xl font-semibold text-[#38bdf8]">0</p>
+          </article>
+          <article class="rounded-2xl bg-white border border-[#b0b0b0] px-5 py-5 flex items-center justify-between gap-4">
+           <div class="flex items-center gap-3 flex-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 24 24" class="w-8 h-8 text-[#ffd57a]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle> <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <p class="text-sm font-semibold text-[#2c2c2c]">Em Andamento</p>
+           </div>
+           <p id="stat-rids-andamento" class="text-3xl font-semibold text-[#ffd57a]">0</p>
+          </article>
+          <article class="rounded-2xl bg-white border border-[#b0b0b0] px-5 py-5 flex items-center justify-between gap-4">
+           <div class="flex items-center gap-3 flex-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 24 24" class="w-8 h-8 text-[#f97316]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle> <line x1="12" y1="8" x2="12" y2="12"></line> <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <p class="text-sm font-semibold text-[#2c2c2c]">Vencidos</p>
+           </div>
+           <p id="stat-rids-vencidos" class="text-3xl font-semibold text-[#f97316]">0</p>
+          </article>
+          <article class="rounded-2xl bg-white border border-[#b0b0b0] px-5 py-5 flex items-center justify-between gap-4">
+           <div class="flex items-center gap-3 flex-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 24 24" class="w-8 h-8 text-[#22c55e]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path> <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <p class="text-sm font-semibold text-[#2c2c2c]">Corrigidos</p>
+           </div>
+           <p id="stat-rids-corrigidos" class="text-3xl font-semibold text-[#22c55e]">0</p>
+          </article>
+         </div>
+        </section>
+        <section class="space-y-3">
+         <h2 class="text-base sm:text-lg font-semibold text-[#2c2c2c]">RID's Recentes</h2>
+         <div class="rounded-2xl bg-white border border-[#b0b0b0] overflow-hidden">
+          <div id="rids-list" class="space-y-3 p-4 max-h-[340px] overflow-y-auto">
+           <div class="text-center py-4">
+            <p class="text-sm text-[#5a5a5a]">Nenhuma RID emitida ainda</p>
+           </div>
+          </div>
+         </div>
+        </section>
+        <section class="space-y-3">
+         <div class="flex items-center justify-between">
+          <h2 class="text-base sm:text-lg font-semibold text-[#2c2c2c]">Ranking de Emissões</h2>
+          <div class="flex items-center gap-2"><select id="ranking-mes" class="px-3 py-1.5 rounded-lg border border-[#b0b0b0] bg-white text-xs"> <option value="todos">Todos os meses</option> <option value="0">Janeiro</option> <option value="1">Fevereiro</option> <option value="2">Março</option> <option value="3">Abril</option> <option value="4">Maio</option> <option value="5">Junho</option> <option value="6">Julho</option> <option value="7">Agosto</option> <option value="8">Setembro</option> <option value="9">Outubro</option> <option value="10">Novembro</option> <option value="11">Dezembro</option> </select> <input id="ranking-ano" type="number" min="2020" max="2099" placeholder="Ano" class="w-20 px-3 py-1.5 rounded-lg border border-[#b0b0b0] bg-white text-xs">
+          </div>
+         </div>
+         <div id="ranking-list" class="rounded-2xl bg-white border border-[#b0b0b0] overflow-hidden">
+          <div class="px-5 py-8 text-center">
+           <p class="text-sm text-[#5a5a5a]">Nenhum dado disponível</p>
+          </div>
+         </div>
+        </section>
+       </div><!-- RIDs Section -->
+       <div id="admin-rids-section" class="hidden max-w-6xl mx-auto px-4 py-5 space-y-5">
+        <div class="flex items-center justify-between">
+         <h2 class="text-lg font-semibold">Todos os RIDs</h2>
+         <div class="flex gap-2"><input id="search-rids" type="text" placeholder="Buscar..." class="px-3 py-2 rounded-lg border border-[#b0b0b0] text-sm"> <select id="filter-status" class="px-3 py-2 rounded-lg border border-[#b0b0b0] text-sm"> <option value="todos">Todos</option> <option value="CORRIGIDO">Corrigido</option> <option value="VENCIDO">Vencido</option> <option value="EM_ANDAMENTO">Em Andamento</option> </select> <button id="btn-emitir-rid-admin" class="px-4 py-2 rounded-lg bg-[#ffd57a] hover:bg-[#ffeab8] font-semibold">Emitir RID</button>
+         </div>
+        </div>
+        <div id="all-rids-list" class="space-y-3">
+         <div class="rounded-2xl bg-white border border-[#b0b0b0] px-5 py-8 text-center">
+          <p class="text-sm text-[#5a5a5a]">Carregando...</p>
+         </div>
+        </div>
+       </div><!-- Funcion��������rios Section -->
+       <div id="admin-funcionarios-section" class="hidden max-w-6xl mx-auto px-4 py-5 space-y-5">
+        <div class="flex items-center justify-between">
+         <h2 class="text-lg font-semibold">Funcionários</h2><input id="search-funcionarios" type="text" placeholder="Buscar..." class="px-3 py-2 rounded-lg border border-[#b0b0b0] text-sm">
+        </div>
+        <div id="funcionarios-list" class="space-y-2">
+         <div class="rounded-2xl bg-white border border-[#b0b0b0] px-5 py-8 text-center">
+          <p class="text-sm text-[#5a5a5a]">Carregando...</p>
+         </div>
+        </div>
+       </div><!-- Relatórios Section -->
+       <div id="admin-relatorios-section" class="hidden max-w-6xl mx-auto px-4 py-5 space-y-5">
+        <div class="rounded-2xl bg-white border border-[#b0b0b0] overflow-hidden">
+         <div class="px-5 py-4 border-b border-[#b0b0b0] flex items-center justify-between gap-4">
+          <h3 class="font-semibold">Planilha de RIDs</h3>
+          <div class="flex items-center gap-3"><select id="filtro-mes-relatorio" class="px-3 py-1.5 rounded-lg border border-[#b0b0b0] bg-white text-xs"> <option value="todos">Todos os meses</option> <option value="0">Janeiro</option> <option value="1">Fevereiro</option> <option value="2">Março</option> <option value="3">Abril</option> <option value="4">Maio</option> <option value="5">Junho</option> <option value="6">Julho</option> <option value="7">Agosto</option> <option value="8">Setembro</option> <option value="9">Outubro</option> <option value="10">Novembro</option> <option value="11">Dezembro</option> </select> <input id="filtro-ano-relatorio" type="number" min="2020" max="2099" placeholder="Ano" class="w-20 px-3 py-1.5 rounded-lg border border-[#b0b0b0] bg-white text-xs"> <button id="btn-exportar-excel" class="px-3 py-1.5 rounded-lg bg-[#ffd57a] hover:bg-[#ffeab8] text-xs font-semibold">Exportar Excel</button>
+          </div>
+         </div>
+         <div class="overflow-x-auto">
+          <table class="w-full text-xs">
+           <thead class="bg-[#ece5df] border-b border-[#b0b0b0]">
+            <tr>
+             <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">Unidade</th>
+             <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">RID Nº</th>
+             <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">Data Emissão</th>
+             <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">Emitente</th>
+             <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">Funcionário/Terceiro/Visitante</th>
+             <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">Setor/Empresa</th>
+             <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">Local do Incidente</th>
+             <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">G��nese do Incidente</th>
+             <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">Origem da Detecção</th>
+             <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">Descrição</th>
+             <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">Classificação de Risco</th>
+             <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">Ação Imediata</th>
+             <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">Ações Corretivas</th>
+             <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">Respons����vel pelas A����ões</th>
+             <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">Prazo para Conclusão</th>
+             <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">Data de Conclusão</th>
+             <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">Status</th>
+            </tr>
+           </thead>
+           <tbody id="relatorios-table-body">
+            <tr>
+             <td colspan="17" class="px-5 py-8 text-center">Carregando...</td>
+            </tr>
+           </tbody>
+          </table>
+         </div>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div><!-- FUNCIONÁRIO VIEW -->
+    <div id="view-func" class="hidden w-full h-full">
+     <div class="w-full h-full flex flex-col">
+      <header class="flex-shrink-0 bg-[#d6d6d4] border-b border-[#b0b0b0]">
+       <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+         <div class="w-9 h-9 rounded-xl bg-[#ffd57a] flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path> <path d="M14 2v6h6"></path>
+          </svg>
+         </div>
+         <div>
+          <p class="text-sm font-semibold uppercase">Sistema de emissão e gestão de RID's</p>
+          <p class="text-xs text-[#5a5a5a]">Painel do Funcionário</p>
+         </div>
+        </div>
+        <div class="flex items-center gap-2"><button id="btn-notificacoes-func" type="button" class="relative w-10 h-10 rounded-lg hover:bg-[#ece5df] transition-colors flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 24 24" class="w-5 h-5 text-[#2c2c2c]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path> <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg><span id="badge-notif-func" class="hidden absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">0</span> </button>
+         <div class="relative"><button id="btn-menu-func" type="button" class="w-10 h-10 rounded-lg hover:bg-[#ece5df] transition-colors flex flex-col items-center justify-center gap-1.5"> <span class="w-5 h-0.5 bg-[#2c2c2c] rounded-full"></span> <span class="w-5 h-0.5 bg-[#2c2c2c] rounded-full"></span> <span class="w-5 h-0.5 bg-[#2c2c2c] rounded-full"></span> </button>
+          <div id="menu-dropdown-func" class="hidden absolute right-0 top-12 w-40 bg-white border border-[#b0b0b0] rounded-xl shadow-lg overflow-hidden z-50"><button id="btn-logout-func" type="button" class="w-full px-4 py-3 text-left text-sm font-semibold text-[#2c2c2c] hover:bg-[#ece5df] transition-colors"> Sair </button>
+          </div>
+         </div>
+        </div>
+       </div>
+      </header>
+      <div class="flex-1 overflow-auto">
+       <div class="max-w-6xl mx-auto px-4 py-5 space-y-5">
+        <div class="flex items-center justify-between">
+         <h2 class="text-lg font-semibold">Minhas RID's</h2><button id="btn-emitir-rid" class="px-4 py-2.5 rounded-xl bg-[#ffd57a] hover:bg-[#ffeab8] font-semibold">Emitir Novo RID</button>
+        </div>
+        <div id="func-rids-list" class="space-y-3">
+         <div class="rounded-2xl bg-white border border-[#b0b0b0] px-5 py-8 text-center">
+          <p class="text-sm text-[#5a5a5a]">Você ainda não emitiu nenhum RID</p>
+         </div>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div>
+   </section><!-- Modal Cadastro -->
+   <div id="modal-cadastro" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl border border-[#b0b0b0] max-w-md w-full max-h-[90%] overflow-auto">
+     <div class="px-6 py-4 border-b border-[#b0b0b0] flex items-center justify-between">
+      <h3 class="text-lg font-semibold">Criar Nova Conta</h3><button id="btn-fechar-modal-cadastro" class="w-8 h-8 rounded-full hover:bg-[#ece5df] flex items-center justify-center">×</button>
+     </div>
+     <form id="form-cadastro" class="px-6 py-6 space-y-4">
+      <div><label for="cadastro-nome" class="block text-sm font-medium mb-1.5">Nome Completo</label> <input id="cadastro-nome" type="text" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]" required>
+      </div>
+      <div><label for="cadastro-cpf" class="block text-sm font-medium mb-1.5">CPF</label> <input id="cadastro-cpf" type="text" maxlength="14" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]" placeholder="000.000.000-00" required>
+      </div>
+      <div><label for="cadastro-email" class="block text-sm font-medium mb-1.5">E-mail</label> <input id="cadastro-email" type="email" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]" required>
+      </div>
+      <div><label for="cadastro-setor" class="block text-sm font-medium mb-1.5">Setor</label> <select id="cadastro-setor" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]" required> <option value="">Selecione</option> <option value="ADM">ADM</option> <option value="M. MOVEL">M. MOVEL</option> <option value="M. FIXA">M. FIXA</option> <option value="M. ELÉTRICA">M. ELÉTRICA</option> <option value="PRODUÇÃO">PRODUÇÃO</option> <option value="MINA">MINA</option> </select>
+      </div>
+      <div><label for="cadastro-senha" class="block text-sm font-medium mb-1.5">Senha</label> <input id="cadastro-senha" type="password" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]" required>
+      </div>
+      <div><label for="cadastro-confirmar-senha" class="block text-sm font-medium mb-1.5">Confirmar Senha</label> <input id="cadastro-confirmar-senha" type="password" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]" required>
+      </div>
+      <div id="cadastro-message" class="text-xs min-h-[1.25rem]"></div>
+      <div class="flex gap-3"><button type="button" id="btn-cancelar-cadastro" class="flex-1 px-4 py-2.5 rounded-xl border border-[#b0b0b0] hover:bg-[#d6d6d4]">Cancelar</button> <button type="submit" id="btn-confirmar-cadastro" class="flex-1 px-4 py-2.5 rounded-xl bg-[#ffd57a] hover:bg-[#ffeab8] font-semibold disabled:opacity-70"> <span id="btn-confirmar-cadastro-text">Criar Conta</span> </button>
+      </div>
+     </form>
+    </div>
+   </div><!-- Modal Emitir RID -->
+   <div id="modal-emitir-rid" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl border border-[#b0b0b0] max-w-2xl w-full max-h-[90%] overflow-auto">
+     <div class="px-6 py-4 border-b border-[#b0b0b0] flex items-center justify-between">
+      <h3 class="text-lg font-semibold">Emitir Nova RID</h3><button id="btn-fechar-modal" class="w-8 h-8 rounded-full hover:bg-[#ece5df] flex items-center justify-center">×</button>
+     </div>
+     <form id="form-emitir-rid" class="px-6 py-6 space-y-4">
+      <div><label for="rid-emitente" class="block text-sm font-medium mb-1.5">1. Emitente</label> <input id="rid-emitente" type="text" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]" required>
+      </div>
+      <div><label class="block text-sm font-medium mb-1.5">2. Tipo de contrato</label>
+       <div class="space-y-2"><label class="flex items-center gap-2"> <input type="radio" name="tipo_contrato" value="Funcionário" required> <span class="text-sm">Funcionário</span> </label> <label class="flex items-center gap-2"> <input type="radio" name="tipo_contrato" value="Terceiro Contratado"> <span class="text-sm">Terceiro Contratado</span> </label> <label class="flex items-center gap-2"> <input type="radio" name="tipo_contrato" value="Terceiro Eventual"> <span class="text-sm">Terceiro Eventual</span> </label> <label class="flex items-center gap-2"> <input type="radio" name="tipo_contrato" value="Visitante"> <span class="text-sm">Visitante</span> </label>
+       </div>
+      </div>
+      <div><label for="rid-unidade" class="block text-sm font-medium mb-1.5">3. Unidade</label> <input id="rid-unidade" type="text" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]" required>
+      </div>
+      <div><label for="rid-setor" class="block text-sm font-medium mb-1.5">4. Setor do emitente</label> <select id="rid-setor" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]" required> <option value="">Selecione</option> <option value="ADM">ADM</option> <option value="M. MOVEL">M. MOVEL</option> <option value="M. FIXA">M. FIXA</option> <option value="M. ELÉTRICA">M. ELÉTRICA</option> <option value="PRODUÇÃO">PRODUÇÃO</option> <option value="MINA">MINA</option> </select>
+      </div>
+      <div><label for="rid-data" class="block text-sm font-medium mb-1.5">5. Data</label> <input id="rid-data" type="date" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]" required>
+      </div>
+      <div><label class="block text-sm font-medium mb-1.5">6. Incidente ou Desvios</label>
+       <div class="space-y-2"><label class="flex items-center gap-2"> <input type="radio" name="incidente" value="Condição de Risco" required> <span class="text-sm">Condição de Risco</span> </label> <label class="flex items-center gap-2"> <input type="radio" name="incidente" value="Desvio Comportamental"> <span class="text-sm">Desvio Comportamental</span> </label> <label class="flex items-center gap-2"> <input type="radio" name="incidente" value="Dano Material"> <span class="text-sm">Dano Material</span> </label> <label class="flex items-center gap-2"> <input type="radio" name="incidente" value="Quase acidente"> <span class="text-sm">Quase acidente</span> </label>
+       </div>
+      </div>
+      <div><label for="rid-origem" class="block text-sm font-medium mb-1.5">7. Origem da detecção</label> <select id="rid-origem" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]" required> <option value="">Selecione</option> <option value="CSL">CSL</option> <option value="Inspeção programada">Inspeção programada</option> <option value="Inspeção não programada">Inspeção não programada</option> <option value="Observação Comportamental">Observação Comportamental</option> <option value="Constatação espontânea">Constatação espontânea</option> <option value="Auditoria">Auditoria</option> </select>
+      </div>
+      <div><label for="rid-local" class="block text-sm font-medium mb-1.5">8. Local da ocorrência</label> <input id="rid-local" type="text" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]" required>
+      </div>
+      <div><label for="rid-descricao" class="block text-sm font-medium mb-1.5">9. Descri������ão da Ocorrência</label> <textarea id="rid-descricao" rows="4" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df] resize-none" required></textarea>
+      </div>
+      <div><label for="rid-classificacao" class="block text-sm font-medium mb-1.5">10. Classificação de risco</label> <select id="rid-classificacao" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]" required> <option value="">Selecione</option> <option value="Baixo">Baixo</option> <option value="Médio">Médio</option> <option value="Alto">Alto</option> <option value="Crítico">Crítico</option> </select>
+      </div>
+      <div><label for="rid-acao" class="block text-sm font-medium mb-1.5">11. Ação Imediata</label> <textarea id="rid-acao" rows="3" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df] resize-none" required></textarea>
+      </div>
+      <div><label for="rid-status" class="block text-sm font-medium mb-1.5">12. Status</label> <select id="rid-status" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]" required> <option value="">Selecione</option> <option value="CORRIGIDO">CORRIGIDO</option> <option value="VENCIDO">VENCIDO</option> </select>
+      </div>
+      <div id="modal-message" class="text-xs min-h-[1.25rem]"></div>
+      <div class="flex gap-3"><button type="button" id="btn-cancelar-modal" class="flex-1 px-4 py-2.5 rounded-xl border border-[#b0b0b0] hover:bg-[#d6d6d4]">Cancelar</button> <button type="submit" id="btn-salvar-rid" class="flex-1 px-4 py-2.5 rounded-xl bg-[#ffd57a] hover:bg-[#ffeab8] font-semibold disabled:opacity-70"> <span id="btn-salvar-text">Salvar RID</span> </button>
+      </div>
+     </form>
+    </div>
+   </div><!-- Modal Detalhes RID -->
+   <div id="modal-detalhes-rid" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl border border-[#b0b0b0] max-w-3xl w-full max-h-[90%] overflow-auto">
+     <div class="px-6 py-4 border-b border-[#b0b0b0] flex items-center justify-between">
+      <h3 id="detalhes-rid-titulo" class="text-lg font-semibold">Detalhes do RID</h3><button id="btn-fechar-detalhes" class="w-8 h-8 rounded-full hover:bg-[#ece5df] flex items-center justify-center">×</button>
+     </div>
+     <div id="detalhes-rid-conteudo" class="px-6 py-6"></div>
+    </div>
+   </div><!-- Modal Notificações -->
+   <div id="modal-notificacoes" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl border border-[#b0b0b0] max-w-lg w-full max-h-[80%] overflow-auto">
+     <div class="px-6 py-4 border-b border-[#b0b0b0] flex items-center justify-between sticky top-0 bg-white">
+      <h3 class="text-lg font-semibold">Notificações</h3><button id="btn-fechar-notificacoes" class="w-8 h-8 rounded-full hover:bg-[#ece5df] flex items-center justify-center">×</button>
+     </div>
+     <div id="lista-notificacoes" class="px-6 py-4 space-y-3">
+      <div class="text-center py-8">
+       <p class="text-sm text-[#5a5a5a]">Nenhuma notificação</p>
+      </div>
+     </div>
+    </div>
+   </div><!-- Modal Confirmar Exclusão -->
+   <div id="modal-confirmar-exclusao" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl border border-[#b0b0b0] max-w-md w-full">
+     <div class="px-6 py-4 border-b border-[#b0b0b0]">
+      <h3 class="text-lg font-semibold text-red-600">⚠️ Confirmar Exclusão</h3>
+     </div>
+     <div class="px-6 py-6 space-y-4">
+      <p class="text-sm text-[#2c2c2c]">Tem certeza que deseja deletar o funcionário <strong id="nome-funcionario-deletar"></strong>?</p>
+      <p class="text-xs text-[#5a5a5a]">Esta ação não pode ser desfeita e todos os dados do funcionário serão permanentemente removidos do sistema.</p>
+      <div id="exclusao-message" class="text-xs min-h-[1.25rem] text-center"></div>
+      <div class="flex gap-3 pt-2"><button type="button" id="btn-cancelar-exclusao" class="flex-1 px-4 py-2.5 rounded-xl border border-[#b0b0b0] bg-white hover:bg-[#d6d6d4] font-semibold transition-colors"> Cancelar </button> <button type="button" id="btn-confirmar-exclusao" class="flex-1 px-4 py-2.5 rounded-xl text-white bg-red-500 hover:bg-red-600 font-semibold transition-colors disabled:opacity-70"> <span id="btn-confirmar-exclusao-text">Deletar Funcionário</span> </button>
+      </div>
+     </div>
+    </div>
+   </div><!-- Modal Designar RID -->
+   <div id="modal-designar-rid" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl border border-[#b0b0b0] max-w-md w-full max-h-[90%] overflow-auto">
+     <div class="px-6 py-4 border-b border-[#b0b0b0] flex items-center justify-between">
+      <h3 id="designar-rid-titulo" class="text-lg font-semibold">Designar RID</h3><button id="btn-fechar-designar" class="w-8 h-8 rounded-full hover:bg-[#ece5df] flex items-center justify-center">×</button>
+     </div>
+     <form id="form-designar-rid" class="px-6 py-6 space-y-4">
+      <div><label for="designar-admin" class="block text-sm font-medium mb-1.5">Designar para</label> <select id="designar-admin" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]" required> <option value="">Selecione um administrador</option> </select>
+      </div>
+      <div><label for="designar-observacao" class="block text-sm font-medium mb-1.5">Observação</label> <textarea id="designar-observacao" rows="3" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df] resize-none" placeholder="Breve observação sobre a designação" required></textarea>
+      </div>
+      <div><label for="designar-data-estimada" class="block text-sm font-medium mb-1.5">Data Estimada</label> <input id="designar-data-estimada" type="date" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]" required>
+      </div>
+      <div id="designar-message" class="text-xs min-h-[1.25rem]"></div>
+      <div class="flex gap-3"><button type="button" id="btn-cancelar-designar" class="flex-1 px-4 py-2.5 rounded-xl border border-[#b0b0b0] hover:bg-[#d6d6d4]">Cancelar</button> <button type="submit" id="btn-confirmar-designar" class="flex-1 px-4 py-2.5 rounded-xl bg-[#ffd57a] hover:bg-[#ffeab8] font-semibold disabled:opacity-70"> <span id="btn-confirmar-designar-text">Designar</span> </button>
+      </div>
+     </form>
+    </div>
+   </div><!-- Modal Editar RID -->
+   <div id="modal-editar-rid" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl border border-[#b0b0b0] max-w-3xl w-full max-h-[90%] overflow-auto">
+     <div class="px-6 py-4 border-b border-[#b0b0b0] flex items-center justify-between">
+      <h3 id="editar-rid-titulo" class="text-lg font-semibold">Editar RID</h3><button id="btn-fechar-editar" class="w-8 h-8 rounded-full hover:bg-[#ece5df] flex items-center justify-center">×</button>
+     </div>
+     <form id="form-editar-rid" class="px-6 py-6 space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+       <div><label for="edit-unidade" class="block text-sm font-medium mb-1.5">Unidade</label> <input id="edit-unidade" type="text" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]">
+       </div>
+       <div><label for="edit-emitente" class="block text-sm font-medium mb-1.5">Emitente</label> <input id="edit-emitente" type="text" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]">
+       </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+       <div><label for="edit-tipo-contrato" class="block text-sm font-medium mb-1.5">Tipo de Contrato</label> <select id="edit-tipo-contrato" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]"> <option value="Funcionário">Funcionário</option> <option value="Terceiro Contratado">Terceiro Contratado</option> <option value="Terceiro Eventual">Terceiro Eventual</option> <option value="Visitante">Visitante</option> </select>
+       </div>
+       <div><label for="edit-setor" class="block text-sm font-medium mb-1.5">Setor</label> <select id="edit-setor" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]"> <option value="ADM">ADM</option> <option value="M. MOVEL">M. MOVEL</option> <option value="M. FIXA">M. FIXA</option> <option value="M. ELÉTRICA">M. ELÉTRICA</option> <option value="PRODUÇÃO">PRODUÇÃO</option> <option value="MINA">MINA</option> </select>
+       </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+       <div><label for="edit-local" class="block text-sm font-medium mb-1.5">Local da Ocorrência</label> <input id="edit-local" type="text" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]">
+       </div>
+       <div><label for="edit-incidente" class="block text-sm font-medium mb-1.5">Incidente</label> <select id="edit-incidente" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]"> <option value="Condição de Risco">Condição de Risco</option> <option value="Desvio Comportamental">Desvio Comportamental</option> <option value="Dano Material">Dano Material</option> <option value="Quase acidente">Quase acidente</option> </select>
+       </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+       <div><label for="edit-origem" class="block text-sm font-medium mb-1.5">Origem da Detecç��o</label> <select id="edit-origem" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]"> <option value="CSL">CSL</option> <option value="Inspeção programada">Inspeção programada</option> <option value="Inspeção não programada">Inspe����o não programada</option> <option value="Observação Comportamental">Observação Comportamental</option> <option value="Constatação espontânea">Constatação espontânea</option> <option value="Auditoria">Auditoria</option> </select>
+       </div>
+       <div><label for="edit-classificacao" class="block text-sm font-medium mb-1.5">Classificação de Risco</label> <select id="edit-classificacao" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]"> <option value="Baixo">Baixo</option> <option value="M��dio">Médio</option> <option value="Alto">Alto</option> <option value="Crítico">Crítico</option> </select>
+       </div>
+      </div>
+      <div><label for="edit-descricao" class="block text-sm font-medium mb-1.5">Descrição</label> <textarea id="edit-descricao" rows="3" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df] resize-none"></textarea>
+      </div>
+      <div><label for="edit-acao-imediata" class="block text-sm font-medium mb-1.5">Ação Imediata</label> <textarea id="edit-acao-imediata" rows="3" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df] resize-none"></textarea>
+      </div>
+      <div><label for="edit-acoes-corretivas" class="block text-sm font-medium mb-1.5">Aç��es Corretivas</label> <textarea id="edit-acoes-corretivas" rows="3" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df] resize-none"></textarea>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+       <div><label for="edit-responsavel" class="block text-sm font-medium mb-1.5">Responsável pelas Ações</label> <input id="edit-responsavel" type="text" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]">
+       </div>
+       <div><label for="edit-prazo" class="block text-sm font-medium mb-1.5">Prazo para Conclusão</label> <input id="edit-prazo" type="date" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]">
+       </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+       <div><label for="edit-data-conclusao" class="block text-sm font-medium mb-1.5">Data de Conclusão</label> <input id="edit-data-conclusao" type="date" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]">
+       </div>
+       <div><label for="edit-status-rid" class="block text-sm font-medium mb-1.5">Status</label> <select id="edit-status-rid" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]"> <option value="CORRIGIDO">CORRIGIDO</option> <option value="VENCIDO">VENCIDO</option> <option value="EM_ANDAMENTO">EM ANDAMENTO</option> </select>
+       </div>
+      </div>
+      <div id="editar-message" class="text-xs min-h-[1.25rem]"></div>
+      <div class="flex gap-3"><button type="button" id="btn-cancelar-editar" class="flex-1 px-4 py-2.5 rounded-xl border border-[#b0b0b0] hover:bg-[#d6d6d4]">Cancelar</button> <button type="submit" id="btn-salvar-edicao" class="flex-1 px-4 py-2.5 rounded-xl bg-[#ffd57a] hover:bg-[#ffeab8] font-semibold disabled:opacity-70"> <span id="btn-salvar-edicao-text">Salvar Alterações</span> </button>
+      </div>
+     </form>
+    </div>
+   </div>
+   <footer class="w-full flex-shrink-0 bg-[#d6d6d4] border-t border-[#b0b0b0]">
+    <div class="max-w-6xl mx-auto px-4 py-2 text-center text-[11px] text-[#5a5a5a]"><span>�������� J. DEMITO | Todos os direitos reservados. Desenvolvido por Juan Carlos</span>
+    </div>
+   </footer>
+  </main>
+  <script type="module">
+  async function waitForFirebase() {
+    if (window.firebaseReady) return;
+    return new Promise(resolve => {
+      window.addEventListener('firebaseReady', resolve, { once: true });
+    });
+  }
+
+  await waitForFirebase();
+
+  const auth = window.firebaseAuth;
+  const db = window.firebaseDb;
+  const {
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    onAuthStateChanged,
+    signOut,
+    collection,
+    addDoc,
+    getDocs,
+    updateDoc,
+    deleteDoc,
+    doc,
+    query,
+    where,
+    orderBy,
+    onSnapshot,
+    serverTimestamp
+  } = window.firebaseModules;
+
+  let currentUser = null;
+  let allRidsData = [];
+  let currentAdminSection = 'dashboard';
+  let unsubscribeRids = null;
+  let unsubscribeNotificacoes = null;
+
+  const adminCPFs = [
+    '01794238006', '12958477080', '20831765041', '31590792002', '42761954073',
+    '53810286010', '64973512059', '75049831008', '86127094000', '97285376024',
+    '08461953005', '19540728060', '20689147019', '31756089072', '42890361034',
+    '53974682007', '64058293098', '75130974040', '86249751012', '97310826001'
+  ];
+
+  function formatCPF(value) {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length <= 3) return numbers;
+    if (numbers.length <= 6) return numbers.slice(0, 3) + '.' + numbers.slice(3);
+    if (numbers.length <= 9) return numbers.slice(0, 3) + '.' + numbers.slice(3, 6) + '.' + numbers.slice(6);
+    return numbers.slice(0, 3) + '.' + numbers.slice(3, 6) + '.' + numbers.slice(6, 9) + '-' + numbers.slice(9, 11);
+  }
+
+  function validarCPF(cpf) {
+    return cpf.replace(/\D/g, '').length === 11;
+  }
+
+  async function isAdmin(email) {
+    const adminEmails = ['admin@rid.com', 'gestor@rid.com'];
+    if (adminEmails.includes(email.toLowerCase())) return true;
+    
+    try {
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('email', '==', email));
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        const userData = querySnapshot.docs[0].data();
+        return adminCPFs.includes(userData.cpf);
+      }
+    } catch (error) {
+      console.error('Erro ao verificar admin:', error);
+    }
+    
+    return false;
+  }
+
+  function showView(name) {
+    document.getElementById('view-login').classList.add('hidden');
+    document.getElementById('view-admin').classList.add('hidden');
+    document.getElementById('view-func').classList.add('hidden');
+
+    if (name === 'login') {
+      document.getElementById('view-login').classList.remove('hidden');
+    } else if (name === 'admin') {
+      document.getElementById('view-admin').classList.remove('hidden');
+      showAdminSection(currentAdminSection);
+    } else if (name === 'func') {
+      document.getElementById('view-func').classList.remove('hidden');
+    }
+  }
+
+  function showAdminSection(section) {
+    currentAdminSection = section;
+    
+    document.getElementById('admin-dashboard-section').classList.add('hidden');
+    document.getElementById('admin-rids-section').classList.add('hidden');
+    document.getElementById('admin-funcionarios-section').classList.add('hidden');
+    document.getElementById('admin-relatorios-section').classList.add('hidden');
+
+    const activeClass = 'px-3 sm:px-4 py-1.5 rounded-full bg-[#ffd57a] text-[#2c2c2c] font-semibold shadow-sm whitespace-nowrap';
+    const inactiveClass = 'px-3 sm:px-4 py-1.5 rounded-full text-[#2c2c2c] border border-transparent hover:border-[#b0b0b0] hover:bg-[#ece5df] whitespace-nowrap';
+
+    document.getElementById('btn-nav-dashboard').className = inactiveClass;
+    document.getElementById('btn-nav-rids').className = inactiveClass;
+    document.getElementById('btn-nav-funcionarios').className = inactiveClass;
+    document.getElementById('btn-nav-relatorios').className = inactiveClass;
+
+    if (section === 'dashboard') {
+      document.getElementById('admin-dashboard-section').classList.remove('hidden');
+      document.getElementById('btn-nav-dashboard').className = activeClass;
+    } else if (section === 'rids') {
+      document.getElementById('admin-rids-section').classList.remove('hidden');
+      document.getElementById('btn-nav-rids').className = activeClass;
+      renderAllRids();
+    } else if (section === 'funcionarios') {
+      document.getElementById('admin-funcionarios-section').classList.remove('hidden');
+      document.getElementById('btn-nav-funcionarios').className = activeClass;
+      renderFuncionarios();
+    } else if (section === 'relatorios') {
+      document.getElementById('admin-relatorios-section').classList.remove('hidden');
+      document.getElementById('btn-nav-relatorios').className = activeClass;
+      renderRelatoriosTable();
+    }
+  }
+
+  function updateAdminStats() {
+    const total = allRidsData.length;
+    const andamento = allRidsData.filter(r => r.status === 'EM_ANDAMENTO').length;
+    const vencidos = allRidsData.filter(r => r.status === 'VENCIDO').length;
+    const corrigidos = allRidsData.filter(r => r.status === 'CORRIGIDO').length;
+
+    document.getElementById('stat-rids-total').textContent = total;
+    document.getElementById('stat-rids-andamento').textContent = andamento;
+    document.getElementById('stat-rids-vencidos').textContent = vencidos;
+    document.getElementById('stat-rids-corrigidos').textContent = corrigidos;
+  }
+
+  function renderRanking() {
+    const mesSelecionado = document.getElementById('ranking-mes')?.value;
+    const anoSelecionado = document.getElementById('ranking-ano')?.value;
+    const container = document.getElementById('ranking-list');
+    
+    if (!container) return;
+    
+    // Filtrar RIDs por período
+    let ridsFiltrados = allRidsData;
+    
+    if (mesSelecionado !== 'todos' || anoSelecionado) {
+      ridsFiltrados = allRidsData.filter(rid => {
+        const dataEmissao = rid.data_criacao?.toDate();
+        if (!dataEmissao) return false;
+        
+        const mesMatch = mesSelecionado === 'todos' || dataEmissao.getMonth() === parseInt(mesSelecionado);
+        const anoMatch = !anoSelecionado || dataEmissao.getFullYear() === parseInt(anoSelecionado);
+        
+        return mesMatch && anoMatch;
+      });
+    }
+    
+    // Contar RIDs por emitente
+    const contagemPorEmitente = {};
+    ridsFiltrados.forEach(rid => {
+      const emitente = rid.emitente || 'Sem nome';
+      contagemPorEmitente[emitente] = (contagemPorEmitente[emitente] || 0) + 1;
+    });
+    
+    // Converter para array e ordenar
+    const ranking = Object.entries(contagemPorEmitente)
+      .map(([nome, quantidade]) => ({ nome, quantidade }))
+      .sort((a, b) => b.quantidade - a.quantidade)
+      .slice(0, 3); // Top 3
+    
+    if (ranking.length === 0) {
+      container.innerHTML = '<div class="px-5 py-8 text-center"><p class="text-sm text-[#5a5a5a]">Nenhum dado disponível para o período selecionado</p></div>';
+      return;
+    }
+    
+    // Renderizar ranking
+    container.innerHTML = `
+      <div class="divide-y divide-[#b0b0b0]">
+        ${ranking.map((item, index) => {
+          const medalha = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}º`;
+          const destaque = index < 3 ? 'bg-[#ffd57a]/10' : '';
+          
+          return `
+            <div class="px-5 py-3 flex items-center justify-between gap-4 ${destaque}">
+              <div class="flex items-center gap-3 flex-1">
+                <span class="text-lg font-bold w-8 text-center">${medalha}</span>
+                <p class="text-sm font-semibold text-[#2c2c2c]">${item.nome}</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-2xl font-semibold text-[#38bdf8]">${item.quantidade}</span>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  function renderRidsList(rids, containerId) {
+    const container = document.getElementById(containerId);
+    
+    if (rids.length === 0) {
+      container.innerHTML = '<div class="rounded-2xl bg-white border border-[#b0b0b0] px-5 py-8 text-center"><p class="text-sm text-[#5a5a5a]">Nenhuma RID encontrada</p></div>';
+      return;
+    }
+
+    container.innerHTML = rids.map(rid => {
+      const data = rid.data_criacao?.toDate();
+      const dataFormatada = data ? data.toLocaleDateString('pt-BR') : 'Data não disponível';
+      
+      // Definir cor da classificação
+      let corClassificacao = 'bg-gray-200';
+      if (rid.classificacao_risco === 'Baixo') corClassificacao = 'bg-green-200';
+      else if (rid.classificacao_risco === 'Médio') corClassificacao = 'bg-yellow-200';
+      else if (rid.classificacao_risco === 'Alto') corClassificacao = 'bg-orange-200';
+      else if (rid.classificacao_risco === 'Crítico') corClassificacao = 'bg-red-200';
+      
+      return `
+        <article class="rounded-xl bg-white border border-[#b0b0b0] px-4 py-3 cursor-pointer hover:shadow-md transition-shadow" data-rid-id="${rid.id}">
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex-1">
+              <p class="text-sm font-medium"><span class="font-semibold text-[#2c2c2c]">RID Nº ${String(rid.ridNumber).padStart(3, '0')}</span> - ${rid.emitente || 'Sem título'}</p>
+              <p class="text-xs text-[#5a5a5a]">${rid.setor} • ${dataFormatada}</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs px-2 py-1 rounded-full ${corClassificacao}">${rid.classificacao_risco || 'N/A'}</span>
+              <span class="text-xs px-2 py-1 rounded-full bg-[#ffd57a]/20">${rid.status}</span>
+            </div>
+          </div>
+        </article>
+      `;
+    }).join('');
+
+    container.querySelectorAll('article[data-rid-id]').forEach(article => {
+      article.addEventListener('click', () => {
+        const ridId = article.dataset.ridId;
+        const rid = rids.find(r => r.id === ridId);
+        if (rid) showModalDetalhes(rid);
+      });
+    });
+  }
+
+  function renderAllRids() {
+    const searchTerm = document.getElementById('search-rids')?.value.toLowerCase() || '';
+    const statusFilter = document.getElementById('filter-status')?.value || 'todos';
+    
+    let filtered = allRidsData;
+    
+    if (statusFilter !== 'todos') {
+      filtered = filtered.filter(r => r.status === statusFilter);
+    }
+    
+    if (searchTerm) {
+      filtered = filtered.filter(r => 
+        r.emitente?.toLowerCase().includes(searchTerm) ||
+        r.descricao?.toLowerCase().includes(searchTerm)
+      );
+    }
+    
+    renderRidsList(filtered, 'all-rids-list');
+  }
+
+  async function renderFuncionarios() {
+    const container = document.getElementById('funcionarios-list');
+    const searchTerm = document.getElementById('search-funcionarios')?.value.toLowerCase() || '';
+
+    try {
+      const usersRef = collection(db, 'users');
+      const querySnapshot = await getDocs(usersRef);
+      
+      let funcionarios = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      if (searchTerm) {
+        funcionarios = funcionarios.filter(f => 
+          f.nome?.toLowerCase().includes(searchTerm) ||
+          f.cpf?.includes(searchTerm)
+        );
+      }
+
+      if (funcionarios.length === 0) {
+        container.innerHTML = '<div class="rounded-2xl bg-white border border-[#b0b0b0] px-5 py-8 text-center"><p class="text-sm text-[#5a5a5a]">Nenhum funcion��������rio encontrado</p></div>';
+        return;
+      }
+
+      container.innerHTML = funcionarios.map(f => {
+        const cpfFormatado = f.cpf ? formatCPF(f.cpf) : 'CPF não disponível';
+        const tipo = f.tipo === 'admin' ? 'Administrador' : 'Funcionário';
+        
+        return `
+          <article class="rounded-xl bg-white border border-[#b0b0b0] px-4 py-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-semibold">${f.nome || 'Nome não disponível'}</p>
+                <p class="text-xs text-[#5a5a5a]">CPF: ${cpfFormatado} • ${f.setor || 'Sem setor'}</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs px-2 py-1 rounded-full bg-[#ffd57a]/20">${tipo}</span>
+                <button 
+                  class="btn-deletar-funcionario px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors"
+                  data-func-id="${f.id}"
+                  data-func-nome="${f.nome || 'Funcionário'}"
+                >
+                  Deletar
+                </button>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join('');
+
+      // Adicionar event listeners para os botões de deletar
+      container.querySelectorAll('.btn-deletar-funcionario').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const funcId = btn.dataset.funcId;
+          const funcNome = btn.dataset.funcNome;
+          
+          // Abrir modal de confirmação
+          document.getElementById('modal-confirmar-exclusao').classList.remove('hidden');
+          document.getElementById('nome-funcionario-deletar').textContent = funcNome;
+          
+          // Armazenar ID do funcionário no modal
+          document.getElementById('btn-confirmar-exclusao').dataset.funcId = funcId;
+        });
+      });
+
+    } catch (error) {
+      console.error('Erro ao carregar funcionários:', error);
+      container.innerHTML = '<div class="rounded-2xl bg-white border border-[#b0b0b0] px-5 py-8 text-center"><p class="text-sm text-red-600">Erro ao carregar funcionários</p></div>';
+    }
+  }
+
+  function renderRelatoriosTable() {
+    const tbody = document.getElementById('relatorios-table-body');
+    const mesSelecionado = document.getElementById('filtro-mes-relatorio')?.value;
+    const anoSelecionado = document.getElementById('filtro-ano-relatorio')?.value;
+    
+    // Filtrar RIDs por mês e ano
+    let ridsFiltrados = allRidsData;
+    
+    if (mesSelecionado !== 'todos' || anoSelecionado) {
+      ridsFiltrados = allRidsData.filter(rid => {
+        const dataEmissao = rid.data_criacao?.toDate();
+        if (!dataEmissao) return false;
+        
+        const mesMatch = mesSelecionado === 'todos' || dataEmissao.getMonth() === parseInt(mesSelecionado);
+        const anoMatch = !anoSelecionado || dataEmissao.getFullYear() === parseInt(anoSelecionado);
+        
+        return mesMatch && anoMatch;
+      });
+    }
+    
+    if (ridsFiltrados.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="18" class="px-5 py-8 text-center">Nenhum RID encontrado para o período selecionado</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = ridsFiltrados.map(rid => {
+      const dataEmissao = rid.data_criacao?.toDate();
+      const dataFormatada = dataEmissao ? dataEmissao.toLocaleDateString('pt-BR') : '';
+      
+      // Truncar textos longos para manter uma linha
+      const truncate = (text, maxLength = 30) => {
+        if (!text) return '';
+        return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+      };
+      
+      return `
+        <tr class="border-b border-[#b0b0b0] hover:bg-[#ece5df]/30 cursor-pointer" data-rid-id="${rid.id}">
+          <td class="px-3 py-2 whitespace-nowrap">${rid.unidade || ''}</td>
+          <td class="px-3 py-2 whitespace-nowrap">#${String(rid.ridNumber).padStart(3, '0')}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${dataFormatada}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${rid.emitente || ''}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${rid.tipo_contrato || ''}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${rid.setor || ''}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${truncate(rid.local_ocorrencia, 25)}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${rid.incidente || ''}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${rid.origem_deteccao || ''}</td>
+          <td class="px-3 py-2 whitespace-nowrap max-w-xs overflow-hidden text-ellipsis">${truncate(rid.descricao, 40)}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${rid.classificacao_risco || ''}</td>
+          <td class="px-3 py-2 whitespace-nowrap max-w-xs overflow-hidden text-ellipsis">${truncate(rid.acao_imediata, 40)}</td>
+          <td class="px-3 py-2 whitespace-nowrap max-w-xs overflow-hidden text-ellipsis">${truncate(rid.acoes_corretivas, 40) || 'N/A'}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${rid.responsavel_acoes || 'N/A'}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${rid.prazo_conclusao || 'N/A'}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${rid.data_conclusao || 'N/A'}</td>
+          <td class="px-3 py-2 whitespace-nowrap">${rid.status}</td>
+        </tr>
+      `;
+    }).join('');
+
+    // Adicionar event listeners para as linhas inteiras
+    tbody.querySelectorAll('tr[data-rid-id]').forEach((row) => {
+      row.addEventListener('click', () => {
+        const ridId = row.dataset.ridId;
+        const rid = allRidsData.find(r => r.id === ridId);
+        if (rid) {
+          showModalEditarRid(rid);
+        }
+      });
+    });
+  }
+
+  function showModalEditarRid(rid) {
+    document.getElementById('modal-editar-rid').classList.remove('hidden');
+    document.getElementById('editar-rid-titulo').textContent = `Editar RID #${String(rid.ridNumber).padStart(3, '0')}`;
+    
+    // Preencher campos
+    document.getElementById('edit-unidade').value = rid.unidade || '';
+    document.getElementById('edit-emitente').value = rid.emitente || '';
+    document.getElementById('edit-tipo-contrato').value = rid.tipo_contrato || '';
+    document.getElementById('edit-setor').value = rid.setor || '';
+    document.getElementById('edit-local').value = rid.local_ocorrencia || '';
+    document.getElementById('edit-incidente').value = rid.incidente || '';
+    document.getElementById('edit-origem').value = rid.origem_deteccao || '';
+    document.getElementById('edit-descricao').value = rid.descricao || '';
+    document.getElementById('edit-classificacao').value = rid.classificacao_risco || '';
+    document.getElementById('edit-acao-imediata').value = rid.acao_imediata || '';
+    document.getElementById('edit-acoes-corretivas').value = rid.acoes_corretivas || '';
+    document.getElementById('edit-responsavel').value = rid.responsavel_acoes || '';
+    document.getElementById('edit-prazo').value = rid.prazo_conclusao || '';
+    document.getElementById('edit-data-conclusao').value = rid.data_conclusao || '';
+    document.getElementById('edit-status-rid').value = rid.status || '';
+    
+    // Salvar ID do RID sendo editado
+    document.getElementById('form-editar-rid').dataset.ridId = rid.id;
+  }
+
+  async function abrirModalNotificacoes() {
+    document.getElementById('modal-notificacoes').classList.remove('hidden');
+    
+    try {
+      const notificacoesRef = collection(db, 'notificacoes');
+      const q = query(notificacoesRef, where('destinatario_uid', '==', currentUser.uid));
+      const snapshot = await getDocs(q);
+      
+      const notificacoes = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      
+      // Ordenar manualmente por data (mais recentes primeiro)
+      notificacoes.sort((a, b) => {
+        const dataA = a.data_criacao?.toDate() || new Date(0);
+        const dataB = b.data_criacao?.toDate() || new Date(0);
+        return dataB - dataA;
+      });
+      
+      const container = document.getElementById('lista-notificacoes');
+      
+      if (notificacoes.length === 0) {
+        container.innerHTML = '<div class="text-center py-8"><p class="text-sm text-[#5a5a5a]">Nenhuma notificação</p></div>';
+        return;
+      }
+      
+      container.innerHTML = notificacoes.map(notif => {
+        const dataNotif = notif.data_criacao?.toDate();
+        const dataFormatada = dataNotif ? dataNotif.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Data não disponível';
+        const lida = notif.lida ? 'bg-white' : 'bg-[#ffd57a]/10';
+        
+        return `
+          <div class="rounded-xl border border-[#b0b0b0] px-4 py-3 ${lida} cursor-pointer hover:shadow-md transition-shadow" data-notif-id="${notif.id}" data-rid-id="${notif.rid_id}">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex-1">
+                <p class="text-sm font-semibold text-[#2c2c2c]">🔔 RID #${String(notif.rid_numero).padStart(3, '0')} foi designado para você</p>
+                <p class="text-xs text-[#5a5a5a] mt-1"><strong>Observação:</strong> ${notif.observacao || 'Sem observação'}</p>
+                <p class="text-xs text-[#5a5a5a]"><strong>Data estimada:</strong> ${notif.data_estimada || 'Não informada'}</p>
+                <p class="text-xs text-[#5a5a5a] mt-2">${dataFormatada}</p>
+              </div>
+              ${!notif.lida ? '<span class="w-2 h-2 rounded-full bg-[#ffd57a] flex-shrink-0 mt-1"></span>' : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      // Adicionar event listeners para abrir RID ao clicar na notificação
+      container.querySelectorAll('[data-notif-id]').forEach(notifEl => {
+        notifEl.addEventListener('click', async () => {
+          const notifId = notifEl.dataset.notifId;
+          const ridId = notifEl.dataset.ridId;
+          
+          // Marcar notificação como lida
+          try {
+            const notifRef = doc(db, 'notificacoes', notifId);
+            await updateDoc(notifRef, { lida: true });
+          } catch (error) {
+            console.error('Erro ao marcar notificação como lida:', error);
+          }
+          
+          // Fechar modal de notificações
+          document.getElementById('modal-notificacoes').classList.add('hidden');
+          
+          // Abrir modal de detalhes do RID
+          const rid = allRidsData.find(r => r.id === ridId);
+          if (rid) {
+            showModalDetalhes(rid);
+          }
+        });
+      });
+      
+    } catch (error) {
+      console.error('Erro ao carregar notificações:', error);
+      document.getElementById('lista-notificacoes').innerHTML = '<div class="text-center py-8"><p class="text-sm text-red-600">Erro ao carregar notificações</p></div>';
+    }
+  }
+
+  function exportarParaExcel() {
+    const mesSelecionado = document.getElementById('filtro-mes-relatorio')?.value;
+    const anoSelecionado = document.getElementById('filtro-ano-relatorio')?.value;
+    
+    // Filtrar RIDs por mês e ano (mesma lógica da tabela)
+    let ridsFiltrados = allRidsData;
+    
+    if (mesSelecionado !== 'todos' || anoSelecionado) {
+      ridsFiltrados = allRidsData.filter(rid => {
+        const dataEmissao = rid.data_criacao?.toDate();
+        if (!dataEmissao) return false;
+        
+        const mesMatch = mesSelecionado === 'todos' || dataEmissao.getMonth() === parseInt(mesSelecionado);
+        const anoMatch = !anoSelecionado || dataEmissao.getFullYear() === parseInt(anoSelecionado);
+        
+        return mesMatch && anoMatch;
+      });
+    }
+    
+    if (ridsFiltrados.length === 0) return;
+
+    const headers = [
+      'Unidade', 'RID Nº', 'Data Emissão', 'Emitente', 'Funcionário/Terceiro/Visitante',
+      'Setor/Empresa', 'Local do Incidente', 'Gênese do Incidente', 'Origem da Detecção',
+      'Descrição', 'Classificação de Risco', 'Ação Imediata', 'Ações Corretivas',
+      'Responsável pelas Ações', 'Prazo para Conclusão', 'Data de Conclusão', 'Status'
+    ];
+
+    const rows = ridsFiltrados.map(rid => {
+      const dataEmissao = rid.data_criacao?.toDate();
+      const dataFormatada = dataEmissao ? dataEmissao.toLocaleDateString('pt-BR') : '';
+      
+      return [
+        rid.unidade || '',
+        String(rid.ridNumber).padStart(3, '0'),
+        dataFormatada,
+        rid.emitente || '',
+        rid.tipo_contrato || '',
+        rid.setor || '',
+        rid.local_ocorrencia || '',
+        rid.incidente || '',
+        rid.origem_deteccao || '',
+        rid.descricao || '',
+        rid.classificacao_risco || '',
+        rid.acao_imediata || '',
+        'N/A',
+        'N/A',
+        'N/A',
+        'N/A',
+        rid.status || ''
+      ];
+    });
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    const dataAtual = new Date().toISOString().split('T')[0];
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `relatorio-rids-${dataAtual}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  function showModalDetalhes(rid) {
+    document.getElementById('modal-detalhes-rid').classList.remove('hidden');
+    document.getElementById('detalhes-rid-titulo').textContent = `RID #${String(rid.ridNumber).padStart(3, '0')}`;
+    
+    const data = rid.data_criacao?.toDate();
+    const dataFormatada = data ? data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Não informado';
+    
+    document.getElementById('detalhes-rid-conteudo').innerHTML = `
+      <div class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <p class="text-xs font-medium text-[#5a5a5a] uppercase">Emitente</p>
+            <p class="text-sm">${rid.emitente || 'Não informado'}</p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-[#5a5a5a] uppercase">Tipo de Contrato</p>
+            <p class="text-sm">${rid.tipo_contrato || 'Não informado'}</p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-[#5a5a5a] uppercase">Unidade</p>
+            <p class="text-sm">${rid.unidade || 'Não informado'}</p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-[#5a5a5a] uppercase">Setor Emitente</p>
+            <p class="text-sm">${rid.setor || 'Não informado'}</p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-[#5a5a5a] uppercase">Data de Emissão</p>
+            <p class="text-sm">${dataFormatada}</p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-[#5a5a5a] uppercase">Incidente/Desvio</p>
+            <p class="text-sm">${rid.incidente || 'Não informado'}</p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-[#5a5a5a] uppercase">Origem da Detecção</p>
+            <p class="text-sm">${rid.origem_deteccao || 'Não informado'}</p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-[#5a5a5a] uppercase">Local da Ocorrência</p>
+            <p class="text-sm">${rid.local_ocorrencia || 'Não informado'}</p>
+          </div>
+        </div>
+        
+        <div>
+          <p class="text-xs font-medium text-[#5a5a5a] uppercase mb-2">Descrição da Ocorrência</p>
+          <p class="text-sm bg-[#ece5df] rounded-lg px-4 py-3">${rid.descricao || 'Não informado'}</p>
+        </div>
+        
+        <div>
+          <p class="text-xs font-medium text-[#5a5a5a] uppercase mb-2">Ação Imediata</p>
+          <p class="text-sm bg-[#ece5df] rounded-lg px-4 py-3">${rid.acao_imediata || 'Não informado'}</p>
+        </div>
+
+        <div class="pt-4 border-t border-[#b0b0b0] space-y-4">
+          <div>
+            <label for="edit-classificacao-detalhes" class="block text-xs font-medium text-[#5a5a5a] uppercase mb-2">Classificação de Risco</label>
+            <select id="edit-classificacao-detalhes" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df] text-sm">
+              <option value="Baixo" ${rid.classificacao_risco === 'Baixo' ? 'selected' : ''}>Baixo</option>
+              <option value="Médio" ${rid.classificacao_risco === 'Médio' ? 'selected' : ''}>Médio</option>
+              <option value="Alto" ${rid.classificacao_risco === 'Alto' ? 'selected' : ''}>Alto</option>
+              <option value="Crítico" ${rid.classificacao_risco === 'Cr��������tico' ? 'selected' : ''}>Crítico</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="edit-status" class="block text-xs font-medium text-[#5a5a5a] uppercase mb-2">Status</label>
+            <select id="edit-status" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df] text-sm">
+              <option value="CORRIGIDO" ${rid.status === 'CORRIGIDO' ? 'selected' : ''}>CORRIGIDO</option>
+              <option value="VENCIDO" ${rid.status === 'VENCIDO' ? 'selected' : ''}>VENCIDO</option>
+              <option value="EM_ANDAMENTO" ${rid.status === 'EM_ANDAMENTO' ? 'selected' : ''}>EM ANDAMENTO</option>
+            </select>
+          </div>
+          
+          <div class="flex gap-3">
+            <button id="btn-designar-rid" class="flex-1 px-4 py-2.5 rounded-xl bg-[#38bdf8] hover:bg-[#0ea5e9] text-white font-semibold">
+              Designar
+            </button>
+            <button id="btn-salvar-alteracoes" class="flex-1 px-4 py-2.5 rounded-xl bg-[#ffd57a] hover:bg-[#ffeab8] font-semibold">
+              Salvar Alterações
+            </button>
+          </div>
+          
+          <div id="detalhes-message" class="text-xs min-h-[1.25rem] text-center"></div>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('btn-designar-rid').addEventListener('click', async () => {
+      // Fechar modal de detalhes
+      document.getElementById('modal-detalhes-rid').classList.add('hidden');
+      
+      // Abrir modal de designação
+      document.getElementById('modal-designar-rid').classList.remove('hidden');
+      document.getElementById('designar-rid-titulo').textContent = `Designar RID #${String(rid.ridNumber).padStart(3, '0')}`;
+      
+      // Armazenar ID do RID sendo designado
+      document.getElementById('form-designar-rid').dataset.ridId = rid.id;
+      
+      // Carregar lista de administradores
+      try {
+        const usersRef = collection(db, 'users');
+        const querySnapshot = await getDocs(usersRef);
+        
+        const selectAdmin = document.getElementById('designar-admin');
+        selectAdmin.innerHTML = '<option value="">Selecione um administrador</option>';
+        
+        querySnapshot.docs.forEach(doc => {
+          const userData = doc.data();
+          if (adminCPFs.includes(userData.cpf)) {
+            selectAdmin.innerHTML += `<option value="${doc.id}">${userData.nome} - ${userData.setor}</option>`;
+          }
+        });
+      } catch (error) {
+        console.error('Erro ao carregar administradores:', error);
+      }
+    });
+
+    document.getElementById('btn-salvar-alteracoes').addEventListener('click', async () => {
+      const novoStatus = document.getElementById('edit-status').value;
+      const novaClassificacao = document.getElementById('edit-classificacao-detalhes').value;
+      const btn = document.getElementById('btn-salvar-alteracoes');
+      const msg = document.getElementById('detalhes-message');
+      
+      btn.disabled = true;
+      btn.textContent = 'Salvando...';
+      
+      try {
+        const ridRef = doc(db, 'rids', rid.id);
+        await updateDoc(ridRef, {
+          status: novoStatus,
+          classificacao_risco: novaClassificacao,
+          data_atualizacao: serverTimestamp()
+        });
+        
+        msg.textContent = 'Alterações salvas!';
+        msg.className = 'text-xs min-h-[1.25rem] text-center text-green-600';
+        
+        setTimeout(() => {
+          document.getElementById('modal-detalhes-rid').classList.add('hidden');
+        }, 1500);
+      } catch (error) {
+        console.error('Erro ao salvar:', error);
+        msg.textContent = 'Erro ao salvar';
+        msg.className = 'text-xs min-h-[1.25rem] text-center text-red-600';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Salvar Alterações';
+      }
+    });
+  }
+
+  // Auth listener
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      currentUser = user;
+      
+      const userIsAdmin = await isAdmin(user.email);
+      if (userIsAdmin) {
+        showView('admin');
+        
+        const hoje = new Date();
+        document.getElementById('ranking-mes').value = 'todos';
+        document.getElementById('ranking-ano').value = hoje.getFullYear().toString();
+        
+        // Event listeners para atualizar ranking
+        document.getElementById('ranking-mes').addEventListener('change', renderRanking);
+        document.getElementById('ranking-ano').addEventListener('input', renderRanking);
+        
+        const ridsRef = collection(db, 'rids');
+        const q = query(ridsRef, orderBy('ridNumber', 'desc'));
+        
+        unsubscribeRids = onSnapshot(q, (snapshot) => {
+          allRidsData = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          
+          updateAdminStats();
+          
+          // Filtrar RIDs da semana atual
+          const hoje = new Date();
+          const inicioSemana = new Date(hoje);
+          inicioSemana.setDate(hoje.getDate() - hoje.getDay()); // Domingo
+          inicioSemana.setHours(0, 0, 0, 0);
+          
+          const ridsDaSemana = allRidsData.filter(rid => {
+            const dataRid = rid.data_criacao?.toDate();
+            return dataRid && dataRid >= inicioSemana;
+          });
+          
+          renderRidsList(ridsDaSemana, 'rids-list');
+          renderRanking();
+          
+          if (currentAdminSection === 'rids') renderAllRids();
+          if (currentAdminSection === 'relatorios') renderRelatoriosTable();
+        });
+
+        // Listener de notificações para admin
+        const notificacoesRef = collection(db, 'notificacoes');
+        const qNotif = query(notificacoesRef, where('destinatario_uid', '==', user.uid), where('lida', '==', false));
+        
+        unsubscribeNotificacoes = onSnapshot(qNotif, (snapshot) => {
+          const notificacoesNaoLidas = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          
+          const badge = document.getElementById('badge-notif-admin');
+          if (notificacoesNaoLidas.length > 0) {
+            badge.textContent = notificacoesNaoLidas.length;
+            badge.classList.remove('hidden');
+          } else {
+            badge.classList.add('hidden');
+          }
+        });
+        
+        document.getElementById('btn-nav-dashboard').addEventListener('click', () => showAdminSection('dashboard'));
+        document.getElementById('btn-nav-rids').addEventListener('click', () => showAdminSection('rids'));
+        document.getElementById('btn-nav-funcionarios').addEventListener('click', () => showAdminSection('funcionarios'));
+        document.getElementById('btn-nav-relatorios').addEventListener('click', () => showAdminSection('relatorios'));
+        
+        document.getElementById('btn-exportar-excel').addEventListener('click', exportarParaExcel);
+        document.getElementById('search-rids')?.addEventListener('input', renderAllRids);
+        document.getElementById('filter-status')?.addEventListener('change', renderAllRids);
+        document.getElementById('search-funcionarios')?.addEventListener('input', renderFuncionarios);
+        document.getElementById('filtro-mes-relatorio')?.addEventListener('change', renderRelatoriosTable);
+        document.getElementById('filtro-ano-relatorio')?.addEventListener('input', renderRelatoriosTable);
+        document.getElementById('btn-emitir-rid-admin')?.addEventListener('click', () => {
+          document.getElementById('modal-emitir-rid').classList.remove('hidden');
+        });
+        
+      } else {
+        showView('func');
+        
+        // Buscar dados do usuário para pegar o CPF
+        const usersRef = collection(db, 'users');
+        const qUser = query(usersRef, where('uid', '==', user.uid));
+        const userSnapshot = await getDocs(qUser);
+        const userData = userSnapshot.docs[0]?.data();
+        const cpfUsuario = userData?.cpf || '';
+        
+        // Buscar TODOS os RIDs e filtrar localmente pelo CPF
+        const ridsRef = collection(db, 'rids');
+        const q = query(ridsRef, orderBy('ridNumber', 'desc'));
+        
+        unsubscribeRids = onSnapshot(q, (snapshot) => {
+          const todosRids = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          
+          // Filtrar RIDs criados pelo CPF do usuário OU designados para ele
+          const userRids = todosRids.filter(rid => 
+            rid.criado_por_cpf === cpfUsuario || 
+            rid.criado_por === user.uid ||
+            rid.designado_para_uid === user.uid
+          );
+          
+          allRidsData = userRids;
+          renderRidsList(userRids, 'func-rids-list');
+        });
+
+        // Listener de notificações para funcionário
+        const notificacoesRef = collection(db, 'notificacoes');
+        const qNotif = query(notificacoesRef, where('destinatario_uid', '==', user.uid), where('lida', '==', false));
+        
+        unsubscribeNotificacoes = onSnapshot(qNotif, (snapshot) => {
+          const notificacoesNaoLidas = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          
+          const badge = document.getElementById('badge-notif-func');
+          if (notificacoesNaoLidas.length > 0) {
+            badge.textContent = notificacoesNaoLidas.length;
+            badge.classList.remove('hidden');
+          } else {
+            badge.classList.add('hidden');
+          }
+        });
+      }
+    } else {
+      showView('login');
+      if (unsubscribeRids) {
+        unsubscribeRids();
+        unsubscribeRids = null;
+      }
+      if (unsubscribeNotificacoes) {
+        unsubscribeNotificacoes();
+        unsubscribeNotificacoes = null;
+      }
+    }
+  });
+
+  // Login
+  document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const emailOrCpf = document.getElementById('email').value.trim();
+    const senha = document.getElementById('senha').value;
+    const btn = document.getElementById('btn-entrar');
+    const btnText = document.getElementById('btn-entrar-text');
+    const msg = document.getElementById('login-message');
+    
+    btn.disabled = true;
+    btnText.textContent = 'Entrando...';
+    msg.textContent = '';
+    
+    try {
+      let emailToUse = emailOrCpf;
+      
+      if (/^\d{11}$/.test(emailOrCpf.replace(/\D/g, ''))) {
+        const cpfLimpo = emailOrCpf.replace(/\D/g, '');
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('cpf', '==', cpfLimpo));
+        const querySnapshot = await getDocs(q);
+        
+        if (querySnapshot.empty) {
+          msg.textContent = 'CPF não encontrado';
+          msg.className = 'text-sm min-h-[1.5rem] text-center font-medium text-red-600';
+          btn.disabled = false;
+          btnText.textContent = 'Entrar';
+          return;
+        }
+        
+        emailToUse = querySnapshot.docs[0].data().email;
+      }
+      
+      await signInWithEmailAndPassword(auth, emailToUse, senha);
+      msg.textContent = 'Login realizado!';
+      msg.className = 'text-sm min-h-[1.5rem] text-center font-medium text-green-600';
+      
+    } catch (error) {
+      console.error('Erro no login:', error);
+      msg.textContent = 'CPF/E-mail ou senha incorretos';
+      msg.className = 'text-sm min-h-[1.5rem] text-center font-medium text-red-600';
+    } finally {
+      btn.disabled = false;
+      btnText.textContent = 'Entrar';
+    }
+  });
+
+  // Cadastro
+  document.getElementById('btn-cadastrar').addEventListener('click', () => {
+    document.getElementById('modal-cadastro').classList.remove('hidden');
+  });
+  
+  document.getElementById('btn-fechar-modal-cadastro').addEventListener('click', () => {
+    document.getElementById('modal-cadastro').classList.add('hidden');
+  });
+  
+  document.getElementById('btn-cancelar-cadastro').addEventListener('click', () => {
+    document.getElementById('modal-cadastro').classList.add('hidden');
+  });
+  
+  document.getElementById('cadastro-cpf').addEventListener('input', (e) => {
+    e.target.value = formatCPF(e.target.value);
+  });
+  
+  document.getElementById('form-cadastro').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const nome = document.getElementById('cadastro-nome').value.trim();
+    const cpf = document.getElementById('cadastro-cpf').value.replace(/\D/g, '');
+    const email = document.getElementById('cadastro-email').value.trim();
+    const setor = document.getElementById('cadastro-setor').value;
+    const senha = document.getElementById('cadastro-senha').value;
+    const confirmarSenha = document.getElementById('cadastro-confirmar-senha').value;
+    const btn = document.getElementById('btn-confirmar-cadastro');
+    const btnText = document.getElementById('btn-confirmar-cadastro-text');
+    const msg = document.getElementById('cadastro-message');
+    
+    if (!validarCPF(cpf)) {
+      msg.textContent = 'CPF inválido';
+      msg.className = 'text-xs min-h-[1.25rem] text-red-600';
+      return;
+    }
+    
+    if (senha !== confirmarSenha) {
+      msg.textContent = 'As senhas não coincidem';
+      msg.className = 'text-xs min-h-[1.25rem] text-red-600';
+      return;
+    }
+    
+    if (senha.length < 6) {
+      msg.textContent = 'A senha deve ter no mínimo 6 caracteres';
+      msg.className = 'text-xs min-h-[1.25rem] text-red-600';
+      return;
+    }
+    
+    btn.disabled = true;
+    btnText.textContent = 'Criando...';
+    msg.textContent = '';
+    
+    try {
+      const usersRef = collection(db, 'users');
+      const qCpf = query(usersRef, where('cpf', '==', cpf));
+      const cpfSnapshot = await getDocs(qCpf);
+      
+      if (!cpfSnapshot.empty) {
+        msg.textContent = 'CPF já cadastrado';
+        msg.className = 'text-xs min-h-[1.25rem] text-red-600';
+        btn.disabled = false;
+        btnText.textContent = 'Criar Conta';
+        return;
+      }
+      
+      const userCredential = await createUserWithEmailAndPassword(auth, email, senha);
+      const user = userCredential.user;
+      
+      const tipo = adminCPFs.includes(cpf) ? 'admin' : 'funcionario';
+      
+      await addDoc(usersRef, {
+        uid: user.uid,
+        nome,
+        cpf,
+        email,
+        setor,
+        tipo,
+        data_criacao: serverTimestamp()
+      });
+      
+      // Fazer logout imediatamente após criar a conta
+      await signOut(auth);
+      
+      msg.textContent = 'Conta criada com sucesso! Faça login para continuar.';
+      msg.className = 'text-xs min-h-[1.25rem] text-green-600';
+      
+      setTimeout(() => {
+        document.getElementById('modal-cadastro').classList.add('hidden');
+        document.getElementById('form-cadastro').reset();
+        msg.textContent = '';
+        
+        // Mostrar mensagem na tela de login
+        const loginMsg = document.getElementById('login-message');
+        loginMsg.textContent = 'Conta criada! Faça login com suas credenciais.';
+        loginMsg.className = 'text-sm min-h-[1.5rem] text-center font-medium text-green-600';
+        
+        setTimeout(() => {
+          loginMsg.textContent = '';
+        }, 5000);
+      }, 1500);
+      
+    } catch (error) {
+      console.error('Erro ao criar conta:', error);
+      if (error.code === 'auth/email-already-in-use') {
+        msg.textContent = 'E-mail já cadastrado';
+      } else {
+        msg.textContent = 'Erro ao criar conta';
+      }
+      msg.className = 'text-xs min-h-[1.25rem] text-red-600';
+    } finally {
+      btn.disabled = false;
+      btnText.textContent = 'Criar Conta';
+    }
+  });
+
+  // Emitir RID
+  document.getElementById('btn-emitir-rid')?.addEventListener('click', () => {
+    document.getElementById('modal-emitir-rid').classList.remove('hidden');
+  });
+  
+  document.getElementById('btn-fechar-modal').addEventListener('click', () => {
+    document.getElementById('modal-emitir-rid').classList.add('hidden');
+  });
+  
+  document.getElementById('btn-cancelar-modal').addEventListener('click', () => {
+    document.getElementById('modal-emitir-rid').classList.add('hidden');
+  });
+  
+  document.getElementById('form-emitir-rid').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    // Buscar CPF do usuário logado
+    const usersRef = collection(db, 'users');
+    const qUser = query(usersRef, where('uid', '==', currentUser.uid));
+    const userSnapshot = await getDocs(qUser);
+    const userData = userSnapshot.docs[0]?.data();
+    const cpfUsuario = userData?.cpf || '';
+    
+    const formData = {
+      emitente: document.getElementById('rid-emitente').value,
+      tipo_contrato: document.querySelector('input[name="tipo_contrato"]:checked').value,
+      unidade: document.getElementById('rid-unidade').value,
+      setor: document.getElementById('rid-setor').value,
+      data_ocorrencia: document.getElementById('rid-data').value,
+      incidente: document.querySelector('input[name="incidente"]:checked').value,
+      origem_deteccao: document.getElementById('rid-origem').value,
+      local_ocorrencia: document.getElementById('rid-local').value,
+      descricao: document.getElementById('rid-descricao').value,
+      classificacao_risco: document.getElementById('rid-classificacao').value,
+      acao_imediata: document.getElementById('rid-acao').value,
+      status: document.getElementById('rid-status').value,
+      criado_por: currentUser.uid,
+      criado_por_cpf: cpfUsuario,
+      data_criacao: serverTimestamp()
+    };
+    
+    const btn = document.getElementById('btn-salvar-rid');
+    const btnText = document.getElementById('btn-salvar-text');
+    const msg = document.getElementById('modal-message');
+    
+    btn.disabled = true;
+    btnText.textContent = 'Salvando...';
+    msg.textContent = '';
+    
+    try {
+      // Obter próximo n��mero de RID
+      const ridsRef = collection(db, 'rids');
+      const q = query(ridsRef, orderBy('ridNumber', 'desc'));
+      const snapshot = await getDocs(q);
+      
+      let nextNumber = 1;
+      if (!snapshot.empty) {
+        const lastRid = snapshot.docs[0].data();
+        nextNumber = (lastRid.ridNumber || 0) + 1;
+      }
+      
+      formData.ridNumber = nextNumber;
+      
+      await addDoc(ridsRef, formData);
+      
+      msg.textContent = 'RID criado com sucesso!';
+      msg.className = 'text-xs min-h-[1.25rem] text-green-600';
+      
+      setTimeout(() => {
+        document.getElementById('modal-emitir-rid').classList.add('hidden');
+        document.getElementById('form-emitir-rid').reset();
+      }, 1500);
+      
+    } catch (error) {
+      console.error('Erro ao criar RID:', error);
+      msg.textContent = 'Erro ao criar RID';
+      msg.className = 'text-xs min-h-[1.25rem] text-red-600';
+    } finally {
+      btn.disabled = false;
+      btnText.textContent = 'Salvar RID';
+    }
+  });
+
+  // Fechar modal detalhes
+  document.getElementById('btn-fechar-detalhes').addEventListener('click', () => {
+    document.getElementById('modal-detalhes-rid').classList.add('hidden');
+  });
+
+  // Modal Editar RID
+  document.getElementById('btn-fechar-editar').addEventListener('click', () => {
+    document.getElementById('modal-editar-rid').classList.add('hidden');
+  });
+
+  document.getElementById('btn-cancelar-editar').addEventListener('click', () => {
+    document.getElementById('modal-editar-rid').classList.add('hidden');
+  });
+
+  document.getElementById('form-editar-rid').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const ridId = e.target.dataset.ridId;
+    if (!ridId) return;
+
+    const dadosAtualizados = {
+      unidade: document.getElementById('edit-unidade').value,
+      emitente: document.getElementById('edit-emitente').value,
+      tipo_contrato: document.getElementById('edit-tipo-contrato').value,
+      setor: document.getElementById('edit-setor').value,
+      local_ocorrencia: document.getElementById('edit-local').value,
+      incidente: document.getElementById('edit-incidente').value,
+      origem_deteccao: document.getElementById('edit-origem').value,
+      descricao: document.getElementById('edit-descricao').value,
+      classificacao_risco: document.getElementById('edit-classificacao').value,
+      acao_imediata: document.getElementById('edit-acao-imediata').value,
+      acoes_corretivas: document.getElementById('edit-acoes-corretivas').value,
+      responsavel_acoes: document.getElementById('edit-responsavel').value,
+      prazo_conclusao: document.getElementById('edit-prazo').value,
+      data_conclusao: document.getElementById('edit-data-conclusao').value,
+      status: document.getElementById('edit-status-rid').value,
+      data_atualizacao: serverTimestamp()
+    };
+
+    const btn = document.getElementById('btn-salvar-edicao');
+    const btnText = document.getElementById('btn-salvar-edicao-text');
+    const msg = document.getElementById('editar-message');
+
+    btn.disabled = true;
+    btnText.textContent = 'Salvando...';
+    msg.textContent = '';
+
+    try {
+      const ridRef = doc(db, 'rids', ridId);
+      await updateDoc(ridRef, dadosAtualizados);
+
+      msg.textContent = 'Alterações salvas com sucesso!';
+      msg.className = 'text-xs min-h-[1.25rem] text-green-600';
+
+      setTimeout(() => {
+        document.getElementById('modal-editar-rid').classList.add('hidden');
+      }, 1500);
+
+    } catch (error) {
+      console.error('Erro ao salvar alterações:', error);
+      msg.textContent = 'Erro ao salvar alterações';
+      msg.className = 'text-xs min-h-[1.25rem] text-red-600';
+    } finally {
+      btn.disabled = false;
+      btnText.textContent = 'Salvar Alterações';
+    }
+  });
+
+  // Modal Designar RID
+  document.getElementById('btn-fechar-designar').addEventListener('click', () => {
+    document.getElementById('modal-designar-rid').classList.add('hidden');
+    document.getElementById('form-designar-rid').reset();
+  });
+
+  document.getElementById('btn-cancelar-designar').addEventListener('click', () => {
+    document.getElementById('modal-designar-rid').classList.add('hidden');
+    document.getElementById('form-designar-rid').reset();
+  });
+
+  document.getElementById('form-designar-rid').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const ridId = e.target.dataset.ridId;
+    if (!ridId) return;
+
+    const adminId = document.getElementById('designar-admin').value;
+    const observacao = document.getElementById('designar-observacao').value;
+    const dataEstimada = document.getElementById('designar-data-estimada').value;
+
+    const btn = document.getElementById('btn-confirmar-designar');
+    const btnText = document.getElementById('btn-confirmar-designar-text');
+    const msg = document.getElementById('designar-message');
+
+    btn.disabled = true;
+    btnText.textContent = 'Designando...';
+    msg.textContent = '';
+
+    try {
+      // Buscar dados do RID
+      const ridAtual = allRidsData.find(r => r.id === ridId);
+      
+      // Buscar nome do administrador designado e seu UID
+      const adminQuery = query(collection(db, 'users'), where('__name__', '==', adminId));
+      const adminDoc = await getDocs(adminQuery);
+      const adminData = adminDoc.docs[0]?.data();
+      const adminNome = adminData?.nome || 'Administrador';
+      const adminUid = adminData?.uid;
+
+      const ridRef = doc(db, 'rids', ridId);
+      await updateDoc(ridRef, {
+        designado_para: adminId,
+        designado_para_nome: adminNome,
+        designado_para_uid: adminUid,
+        observacao_designacao: observacao,
+        data_estimada: dataEstimada,
+        status: 'EM_ANDAMENTO',
+        data_designacao: serverTimestamp()
+      });
+
+      // Criar notificação para o administrador designado
+      if (adminUid) {
+        const notificacoesRef = collection(db, 'notificacoes');
+        await addDoc(notificacoesRef, {
+          tipo: 'rid_designado',
+          rid_id: ridId,
+          rid_numero: ridAtual?.ridNumber || 0,
+          destinatario_uid: adminUid,
+          observacao: observacao,
+          data_estimada: dataEstimada,
+          lida: false,
+          data_criacao: serverTimestamp()
+        });
+      }
+
+      msg.textContent = 'RID designado com sucesso!';
+      msg.className = 'text-xs min-h-[1.25rem] text-green-600';
+
+      setTimeout(() => {
+        document.getElementById('modal-designar-rid').classList.add('hidden');
+        document.getElementById('form-designar-rid').reset();
+      }, 1500);
+
+    } catch (error) {
+      console.error('Erro ao designar RID:', error);
+      msg.textContent = 'Erro ao designar RID';
+      msg.className = 'text-xs min-h-[1.25rem] text-red-600';
+    } finally {
+      btn.disabled = false;
+      btnText.textContent = 'Designar';
+    }
+  });
+
+  // Modal Notificações
+  document.getElementById('btn-notificacoes-admin').addEventListener('click', abrirModalNotificacoes);
+  document.getElementById('btn-notificacoes-func').addEventListener('click', abrirModalNotificacoes);
+  
+  document.getElementById('btn-fechar-notificacoes').addEventListener('click', () => {
+    document.getElementById('modal-notificacoes').classList.add('hidden');
+  });
+
+  // Modal Confirmar Exclusão
+  document.getElementById('btn-cancelar-exclusao').addEventListener('click', () => {
+    document.getElementById('modal-confirmar-exclusao').classList.add('hidden');
+    document.getElementById('exclusao-message').textContent = '';
+  });
+
+  document.getElementById('btn-confirmar-exclusao').addEventListener('click', async () => {
+    const funcId = document.getElementById('btn-confirmar-exclusao').dataset.funcId;
+    if (!funcId) return;
+
+    const btn = document.getElementById('btn-confirmar-exclusao');
+    const btnText = document.getElementById('btn-confirmar-exclusao-text');
+    const msg = document.getElementById('exclusao-message');
+
+    btn.disabled = true;
+    btnText.textContent = 'Deletando...';
+    msg.textContent = '';
+
+    try {
+      const funcRef = doc(db, 'users', funcId);
+      await deleteDoc(funcRef);
+
+      msg.textContent = 'Funcionário deletado com sucesso!';
+      msg.className = 'text-xs min-h-[1.25rem] text-center text-green-600 font-semibold';
+
+      setTimeout(() => {
+        document.getElementById('modal-confirmar-exclusao').classList.add('hidden');
+        msg.textContent = '';
+        renderFuncionarios();
+      }, 1500);
+
+    } catch (error) {
+      console.error('Erro ao deletar funcionário:', error);
+      msg.textContent = 'Erro ao deletar funcionário. Tente novamente.';
+      msg.className = 'text-xs min-h-[1.25rem] text-center text-red-600 font-semibold';
+    } finally {
+      btn.disabled = false;
+      btnText.textContent = 'Deletar Funcionário';
+    }
+  });
+
+  // Menu hambúrguer
+  document.getElementById('btn-menu-admin').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const dropdown = document.getElementById('menu-dropdown-admin');
+    dropdown.classList.toggle('hidden');
+  });
+
+  document.getElementById('btn-menu-func').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const dropdown = document.getElementById('menu-dropdown-func');
+    dropdown.classList.toggle('hidden');
+  });
+
+  // Fechar dropdown ao clicar fora
+  document.addEventListener('click', () => {
+    document.getElementById('menu-dropdown-admin')?.classList.add('hidden');
+    document.getElementById('menu-dropdown-func')?.classList.add('hidden');
+  });
+
+  // Logout
+  document.getElementById('btn-logout-admin').addEventListener('click', async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+    }
+  });
+  
+  document.getElementById('btn-logout-func').addEventListener('click', async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+    }
+  });
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9a7f30a562a280fe',t:'MTc2NDcyNDI4Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
