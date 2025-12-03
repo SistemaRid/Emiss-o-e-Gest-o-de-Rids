@@ -2,7 +2,7 @@
 <html lang="pt-BR">
  <head>
   <meta charset="UTF-8">
-  <title>Sistema de Emiss��o e Gestão de RID's</title>
+  <title>Sistema de Emissão e Gestão de RID's</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"><!-- Tailwind via CDN -->
   <script src="https://cdn.tailwindcss.com"></script><!-- Firebase SDK v9+ (modular) -->
   <script type="module">
@@ -97,7 +97,6 @@
         </div>
         <div class="space-y-1.5"><label for="senha" class="block text-sm font-medium text-[#2c2c2c]"> Senha </label> <input id="senha" type="password" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df] text-sm text-[#2c2c2c] placeholder-[#5a5a5a] focus:border-[#ffd57a] focus:ring-2 focus:ring-[#ffd57a]/40 transition-colors" placeholder="Digite sua senha" required>
         </div>
-        <div id="login-message" class="text-sm min-h-[1.5rem] text-center font-medium"></div>
         <div class="space-y-3 pt-1"><button id="btn-entrar" type="submit" class="w-full px-6 py-3 rounded-xl text-sm font-semibold text-[#2c2c2c] bg-[#ffd57a] hover:bg-[#ffeab8] transition-colors shadow-md disabled:opacity-70 disabled:cursor-not-allowed"> <span id="btn-entrar-text">Entrar</span> </button> <button id="btn-cadastrar" type="button" class="w-full px-6 py-3 rounded-xl text-sm font-semibold text-[#2c2c2c] border border-[#b0b0b0] bg-transparent hover:bg-[#d6d6d4] transition-colors"> Criar Nova Conta </button>
         </div>
        </form>
@@ -296,7 +295,7 @@
       <div class="flex-1 overflow-auto">
        <div class="max-w-6xl mx-auto px-4 py-5 space-y-5">
         <div class="flex items-center justify-between">
-         <h2 class="text-lg font-semibold">Minhas RID's</h2><button id="btn-emitir-rid" class="px-4 py-2.5 rounded-xl bg-[#ffd57a] hover:bg-[#ffeab8] font-semibold">Emitir Novo RID</button>
+         <h2 class="text-lg font-semibold">Meus RID's</h2><button id="btn-emitir-rid" class="px-4 py-2.5 rounded-xl bg-[#ffd57a] hover:bg-[#ffeab8] font-semibold">Emitir Novo RID</button>
         </div>
         <div id="func-rids-list" class="space-y-3">
          <div class="rounded-2xl bg-white border border-[#b0b0b0] px-5 py-8 text-center">
@@ -479,7 +478,7 @@
     </div>
    </div>
    <footer class="w-full flex-shrink-0 bg-[#d6d6d4] border-t border-[#b0b0b0]">
-    <div class="max-w-6xl mx-auto px-4 py-2 text-center text-[11px] text-[#5a5a5a]"><span>���� J. DEMITO | Todos os direitos reservados. Desenvolvido por Juan Carlos</span>
+    <div class="max-w-6xl mx-auto px-4 py-2 text-center text-[11px] text-[#5a5a5a]"><span>© J. DEMITO | Todos os direitos reservados. Desenvolvido por Juan Carlos</span>
     </div>
    </footer>
   </main>
@@ -992,13 +991,27 @@
         const dataFormatada = dataNotif ? dataNotif.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Data não disponível';
         const lida = notif.lida ? 'bg-white' : 'bg-[#ffd57a]/10';
         
+        let conteudoNotificacao = '';
+        
+        if (notif.tipo === 'rid_designado') {
+          conteudoNotificacao = `
+            <p class="text-sm font-semibold text-[#2c2c2c]">🔔 RID #${String(notif.rid_numero).padStart(3, '0')} foi designado para você</p>
+            <p class="text-xs text-[#5a5a5a] mt-1"><strong>Observação:</strong> ${notif.observacao || 'Sem observação'}</p>
+            <p class="text-xs text-[#5a5a5a]"><strong>Data estimada:</strong> ${notif.data_estimada || 'Não informada'}</p>
+          `;
+        } else if (notif.tipo === 'rid_atualizado') {
+          conteudoNotificacao = `
+            <p class="text-sm font-semibold text-[#2c2c2c]">✅ RID #${String(notif.rid_numero).padStart(3, '0')} foi atualizado</p>
+            <p class="text-xs text-[#5a5a5a] mt-1"><strong>Novo status:</strong> ${notif.novo_status}</p>
+            <p class="text-xs text-[#5a5a5a]"><strong>Classificação:</strong> ${notif.nova_classificacao}</p>
+          `;
+        }
+        
         return `
           <div class="rounded-xl border border-[#b0b0b0] px-4 py-3 ${lida} cursor-pointer hover:shadow-md transition-shadow" data-notif-id="${notif.id}" data-rid-id="${notif.rid_id}">
             <div class="flex items-start justify-between gap-3">
               <div class="flex-1">
-                <p class="text-sm font-semibold text-[#2c2c2c]">🔔 RID #${String(notif.rid_numero).padStart(3, '0')} foi designado para você</p>
-                <p class="text-xs text-[#5a5a5a] mt-1"><strong>Observação:</strong> ${notif.observacao || 'Sem observação'}</p>
-                <p class="text-xs text-[#5a5a5a]"><strong>Data estimada:</strong> ${notif.data_estimada || 'Não informada'}</p>
+                ${conteudoNotificacao}
                 <p class="text-xs text-[#5a5a5a] mt-2">${dataFormatada}</p>
               </div>
               ${!notif.lida ? '<span class="w-2 h-2 rounded-full bg-[#ffd57a] flex-shrink-0 mt-1"></span>' : ''}
@@ -1007,27 +1020,23 @@
         `;
       }).join('');
       
-      // Adicionar event listeners para abrir RID ao clicar na notificação
+      // Adicionar event listeners para marcar notificação como lida ao clicar
       container.querySelectorAll('[data-notif-id]').forEach(notifEl => {
         notifEl.addEventListener('click', async () => {
           const notifId = notifEl.dataset.notifId;
-          const ridId = notifEl.dataset.ridId;
           
           // Marcar notificação como lida
           try {
             const notifRef = doc(db, 'notificacoes', notifId);
             await updateDoc(notifRef, { lida: true });
+            
+            // Atualizar visualmente a notificação
+            notifEl.classList.remove('bg-[#ffd57a]/10');
+            notifEl.classList.add('bg-white');
+            const badge = notifEl.querySelector('.w-2.h-2');
+            if (badge) badge.remove();
           } catch (error) {
             console.error('Erro ao marcar notificação como lida:', error);
-          }
-          
-          // Fechar modal de notificações
-          document.getElementById('modal-notificacoes').classList.add('hidden');
-          
-          // Abrir modal de detalhes do RID
-          const rid = allRidsData.find(r => r.id === ridId);
-          if (rid) {
-            showModalDetalhes(rid);
           }
         });
       });
@@ -1109,14 +1118,18 @@
     document.body.removeChild(link);
   }
 
-  function showModalDetalhes(rid) {
+  async function showModalDetalhes(rid) {
     document.getElementById('modal-detalhes-rid').classList.remove('hidden');
     document.getElementById('detalhes-rid-titulo').textContent = `RID #${String(rid.ridNumber).padStart(3, '0')}`;
     
     const data = rid.data_criacao?.toDate();
     const dataFormatada = data ? data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Não informado';
     
-    document.getElementById('detalhes-rid-conteudo').innerHTML = `
+    // Verificar se o usuário atual é admin
+    const userIsAdmin = await isAdmin(currentUser.email);
+    
+    // Conteúdo base (sempre visível)
+    let conteudoHTML = `
       <div class="space-y-4">
         <div class="grid grid-cols-2 gap-4">
           <div>
@@ -1151,6 +1164,14 @@
             <p class="text-xs font-medium text-[#5a5a5a] uppercase">Local da Ocorrência</p>
             <p class="text-sm">${rid.local_ocorrencia || 'Não informado'}</p>
           </div>
+          <div>
+            <p class="text-xs font-medium text-[#5a5a5a] uppercase">Classificação de Risco</p>
+            <p class="text-sm">${rid.classificacao_risco || 'Não informado'}</p>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-[#5a5a5a] uppercase">Status</p>
+            <p class="text-sm">${rid.status || 'Não informado'}</p>
+          </div>
         </div>
         
         <div>
@@ -1162,7 +1183,11 @@
           <p class="text-xs font-medium text-[#5a5a5a] uppercase mb-2">Ação Imediata</p>
           <p class="text-sm bg-[#ece5df] rounded-lg px-4 py-3">${rid.acao_imediata || 'Não informado'}</p>
         </div>
-
+    `;
+    
+    // Adicionar controles de edição apenas para admins
+    if (userIsAdmin) {
+      conteudoHTML += `
         <div class="pt-4 border-t border-[#b0b0b0] space-y-4">
           <div>
             <label for="edit-classificacao-detalhes" class="block text-xs font-medium text-[#5a5a5a] uppercase mb-2">Classificação de Risco</label>
@@ -1194,71 +1219,93 @@
           
           <div id="detalhes-message" class="text-xs min-h-[1.25rem] text-center"></div>
         </div>
-      </div>
-    `;
+      `;
+    }
+    
+    conteudoHTML += `</div>`;
+    
+    document.getElementById('detalhes-rid-conteudo').innerHTML = conteudoHTML;
 
-    document.getElementById('btn-designar-rid').addEventListener('click', async () => {
-      // Fechar modal de detalhes
-      document.getElementById('modal-detalhes-rid').classList.add('hidden');
-      
-      // Abrir modal de designação
-      document.getElementById('modal-designar-rid').classList.remove('hidden');
-      document.getElementById('designar-rid-titulo').textContent = `Designar RID #${String(rid.ridNumber).padStart(3, '0')}`;
-      
-      // Armazenar ID do RID sendo designado
-      document.getElementById('form-designar-rid').dataset.ridId = rid.id;
-      
-      // Carregar lista de administradores
-      try {
-        const usersRef = collection(db, 'users');
-        const querySnapshot = await getDocs(usersRef);
+    // Adicionar event listeners apenas se for admin
+    if (userIsAdmin) {
+      document.getElementById('btn-designar-rid').addEventListener('click', async () => {
+        // Fechar modal de detalhes
+        document.getElementById('modal-detalhes-rid').classList.add('hidden');
         
-        const selectAdmin = document.getElementById('designar-admin');
-        selectAdmin.innerHTML = '<option value="">Selecione um administrador</option>';
+        // Abrir modal de designação
+        document.getElementById('modal-designar-rid').classList.remove('hidden');
+        document.getElementById('designar-rid-titulo').textContent = `Designar RID #${String(rid.ridNumber).padStart(3, '0')}`;
         
-        querySnapshot.docs.forEach(doc => {
-          const userData = doc.data();
-          if (adminCPFs.includes(userData.cpf)) {
-            selectAdmin.innerHTML += `<option value="${doc.id}">${userData.nome} - ${userData.setor}</option>`;
+        // Armazenar ID do RID sendo designado
+        document.getElementById('form-designar-rid').dataset.ridId = rid.id;
+        
+        // Carregar lista de administradores
+        try {
+          const usersRef = collection(db, 'users');
+          const querySnapshot = await getDocs(usersRef);
+          
+          const selectAdmin = document.getElementById('designar-admin');
+          selectAdmin.innerHTML = '<option value="">Selecione um administrador</option>';
+          
+          querySnapshot.docs.forEach(doc => {
+            const userData = doc.data();
+            if (adminCPFs.includes(userData.cpf)) {
+              selectAdmin.innerHTML += `<option value="${doc.id}">${userData.nome} - ${userData.setor}</option>`;
+            }
+          });
+        } catch (error) {
+          console.error('Erro ao carregar administradores:', error);
+        }
+      });
+
+      document.getElementById('btn-salvar-alteracoes').addEventListener('click', async () => {
+        const novoStatus = document.getElementById('edit-status').value;
+        const novaClassificacao = document.getElementById('edit-classificacao-detalhes').value;
+        const btn = document.getElementById('btn-salvar-alteracoes');
+        const msg = document.getElementById('detalhes-message');
+        
+        btn.disabled = true;
+        btn.textContent = 'Salvando...';
+        
+        try {
+          const ridRef = doc(db, 'rids', rid.id);
+          await updateDoc(ridRef, {
+            status: novoStatus,
+            classificacao_risco: novaClassificacao,
+            data_atualizacao: serverTimestamp()
+          });
+          
+          // Criar notificação para o funcionário que emitiu o RID
+          if (rid.criado_por) {
+            const notificacoesRef = collection(db, 'notificacoes');
+            await addDoc(notificacoesRef, {
+              tipo: 'rid_atualizado',
+              rid_id: rid.id,
+              rid_numero: rid.ridNumber || 0,
+              destinatario_uid: rid.criado_por,
+              novo_status: novoStatus,
+              nova_classificacao: novaClassificacao,
+              lida: false,
+              data_criacao: serverTimestamp()
+            });
           }
-        });
-      } catch (error) {
-        console.error('Erro ao carregar administradores:', error);
-      }
-    });
-
-    document.getElementById('btn-salvar-alteracoes').addEventListener('click', async () => {
-      const novoStatus = document.getElementById('edit-status').value;
-      const novaClassificacao = document.getElementById('edit-classificacao-detalhes').value;
-      const btn = document.getElementById('btn-salvar-alteracoes');
-      const msg = document.getElementById('detalhes-message');
-      
-      btn.disabled = true;
-      btn.textContent = 'Salvando...';
-      
-      try {
-        const ridRef = doc(db, 'rids', rid.id);
-        await updateDoc(ridRef, {
-          status: novoStatus,
-          classificacao_risco: novaClassificacao,
-          data_atualizacao: serverTimestamp()
-        });
-        
-        msg.textContent = 'Alterações salvas!';
-        msg.className = 'text-xs min-h-[1.25rem] text-center text-green-600';
-        
-        setTimeout(() => {
-          document.getElementById('modal-detalhes-rid').classList.add('hidden');
-        }, 1500);
-      } catch (error) {
-        console.error('Erro ao salvar:', error);
-        msg.textContent = 'Erro ao salvar';
-        msg.className = 'text-xs min-h-[1.25rem] text-center text-red-600';
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Salvar Alterações';
-      }
-    });
+          
+          msg.textContent = 'Alterações salvas!';
+          msg.className = 'text-xs min-h-[1.25rem] text-center text-green-600';
+          
+          setTimeout(() => {
+            document.getElementById('modal-detalhes-rid').classList.add('hidden');
+          }, 1500);
+        } catch (error) {
+          console.error('Erro ao salvar:', error);
+          msg.textContent = 'Erro ao salvar';
+          msg.className = 'text-xs min-h-[1.25rem] text-center text-red-600';
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Salvar Alterações';
+        }
+      });
+    }
   }
 
   // Auth listener
@@ -1421,11 +1468,9 @@
     const senha = document.getElementById('senha').value;
     const btn = document.getElementById('btn-entrar');
     const btnText = document.getElementById('btn-entrar-text');
-    const msg = document.getElementById('login-message');
     
     btn.disabled = true;
     btnText.textContent = 'Entrando...';
-    msg.textContent = '';
     
     try {
       let emailToUse = emailOrCpf;
@@ -1437,8 +1482,6 @@
         const querySnapshot = await getDocs(q);
         
         if (querySnapshot.empty) {
-          msg.textContent = 'CPF não encontrado';
-          msg.className = 'text-sm min-h-[1.5rem] text-center font-medium text-red-600';
           btn.disabled = false;
           btnText.textContent = 'Entrar';
           return;
@@ -1448,13 +1491,9 @@
       }
       
       await signInWithEmailAndPassword(auth, emailToUse, senha);
-      msg.textContent = 'Login realizado!';
-      msg.className = 'text-sm min-h-[1.5rem] text-center font-medium text-green-600';
       
     } catch (error) {
       console.error('Erro no login:', error);
-      msg.textContent = 'CPF/E-mail ou senha incorretos';
-      msg.className = 'text-sm min-h-[1.5rem] text-center font-medium text-red-600';
     } finally {
       btn.disabled = false;
       btnText.textContent = 'Entrar';
@@ -1551,15 +1590,6 @@
         document.getElementById('modal-cadastro').classList.add('hidden');
         document.getElementById('form-cadastro').reset();
         msg.textContent = '';
-        
-        // Mostrar mensagem na tela de login
-        const loginMsg = document.getElementById('login-message');
-        loginMsg.textContent = 'Conta criada! Faça login com suas credenciais.';
-        loginMsg.className = 'text-sm min-h-[1.5rem] text-center font-medium text-green-600';
-        
-        setTimeout(() => {
-          loginMsg.textContent = '';
-        }, 5000);
       }, 1500);
       
     } catch (error) {
@@ -1707,8 +1737,26 @@
     msg.textContent = '';
 
     try {
+      // Buscar dados do RID antes de atualizar
+      const ridAtual = allRidsData.find(r => r.id === ridId);
+      
       const ridRef = doc(db, 'rids', ridId);
       await updateDoc(ridRef, dadosAtualizados);
+
+      // Criar notificação para o funcionário que emitiu o RID
+      if (ridAtual && ridAtual.criado_por) {
+        const notificacoesRef = collection(db, 'notificacoes');
+        await addDoc(notificacoesRef, {
+          tipo: 'rid_atualizado',
+          rid_id: ridId,
+          rid_numero: ridAtual.ridNumber || 0,
+          destinatario_uid: ridAtual.criado_por,
+          novo_status: dadosAtualizados.status,
+          nova_classificacao: dadosAtualizados.classificacao_risco,
+          lida: false,
+          data_criacao: serverTimestamp()
+        });
+      }
 
       msg.textContent = 'Alterações salvas com sucesso!';
       msg.className = 'text-xs min-h-[1.25rem] text-green-600';
@@ -1896,5 +1944,5 @@
     }
   });
 </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9a7fcf7067a580fe',t:'MTc2NDczMDc5MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9a7fe59b20f9a4cb',t:'MTc2NDczMTY5OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
