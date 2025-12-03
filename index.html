@@ -2,7 +2,7 @@
 <html lang="pt-BR">
  <head>
   <meta charset="UTF-8">
-  <title>Sistema de Emiss��o e Gestão de RID's</title>
+  <title>Sistema de Emissão e Gestão de RID's</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"><!-- Tailwind via CDN -->
   <script src="https://cdn.tailwindcss.com"></script><!-- Firebase SDK v9+ (modular) -->
   <script type="module">
@@ -296,7 +296,7 @@
       <div class="flex-1 overflow-auto">
        <div class="max-w-6xl mx-auto px-4 py-5 space-y-5">
         <div class="flex items-center justify-between">
-         <h2 class="text-lg font-semibold">Meus RID's</h2><button id="btn-emitir-rid" class="px-4 py-2.5 rounded-xl bg-[#ffd57a] hover:bg-[#ffeab8] font-semibold">Emitir Novo RID</button>
+         <h2 class="text-lg font-semibold">Minhas RID's</h2><button id="btn-emitir-rid" class="px-4 py-2.5 rounded-xl bg-[#ffd57a] hover:bg-[#ffeab8] font-semibold">Emitir Novo RID</button>
         </div>
         <div id="func-rids-list" class="space-y-3">
          <div class="rounded-2xl bg-white border border-[#b0b0b0] px-5 py-8 text-center">
@@ -479,7 +479,7 @@
     </div>
    </div>
    <footer class="w-full flex-shrink-0 bg-[#d6d6d4] border-t border-[#b0b0b0]">
-    <div class="max-w-6xl mx-auto px-4 py-2 text-center text-[11px] text-[#5a5a5a]"><span>�� J. DEMITO | Todos os direitos reservados. Desenvolvido por Juan Carlos</span>
+    <div class="max-w-6xl mx-auto px-4 py-2 text-center text-[11px] text-[#5a5a5a]"><span>���� J. DEMITO | Todos os direitos reservados. Desenvolvido por Juan Carlos</span>
     </div>
    </footer>
   </main>
@@ -797,6 +797,13 @@
         id: doc.id,
         ...doc.data()
       }));
+
+      // Ordenar alfabeticamente por nome
+      funcionarios.sort((a, b) => {
+        const nomeA = (a.nome || '').toLowerCase();
+        const nomeB = (b.nome || '').toLowerCase();
+        return nomeA.localeCompare(nomeB);
+      });
 
       if (searchTerm) {
         funcionarios = funcionarios.filter(f => 
@@ -1889,5 +1896,5 @@
     }
   });
 </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9a7fbe1287b180fe',t:'MTc2NDczMDA3OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9a7fc2eb934980fe',t:'MTc2NDczMDI3Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
