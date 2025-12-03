@@ -211,7 +211,7 @@
           <p class="text-sm text-[#5a5a5a]">Carregando...</p>
          </div>
         </div>
-       </div><!-- Funcion��������rios Section -->
+       </div><!-- Funcionários Section -->
        <div id="admin-funcionarios-section" class="hidden max-w-6xl mx-auto px-4 py-5 space-y-5">
         <div class="flex items-center justify-between">
          <h2 class="text-lg font-semibold">Funcionários</h2><input id="search-funcionarios" type="text" placeholder="Buscar..." class="px-3 py-2 rounded-lg border border-[#b0b0b0] text-sm">
@@ -240,13 +240,13 @@
              <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">Funcionário/Terceiro/Visitante</th>
              <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">Setor/Empresa</th>
              <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">Local do Incidente</th>
-             <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">G��nese do Incidente</th>
+             <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">Gênese do Incidente</th>
              <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">Origem da Detecção</th>
              <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">Descrição</th>
              <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">Classificação de Risco</th>
              <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">Ação Imediata</th>
              <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">Ações Corretivas</th>
-             <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">Respons����vel pelas A����ões</th>
+             <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">Responsável pelas Ações</th>
              <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">Prazo para Conclusão</th>
              <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">Data de Conclusão</th>
              <th class="px-3 py-2 text-left font-semibold whitespace-nowrap">Status</th>
@@ -353,7 +353,7 @@
       </div>
       <div><label for="rid-local" class="block text-sm font-medium mb-1.5">8. Local da ocorrência</label> <input id="rid-local" type="text" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]" required>
       </div>
-      <div><label for="rid-descricao" class="block text-sm font-medium mb-1.5">9. Descri������ão da Ocorrência</label> <textarea id="rid-descricao" rows="4" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df] resize-none" required></textarea>
+      <div><label for="rid-descricao" class="block text-sm font-medium mb-1.5">9. Descrição da Ocorrência</label> <textarea id="rid-descricao" rows="4" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df] resize-none" required></textarea>
       </div>
       <div><label for="rid-classificacao" class="block text-sm font-medium mb-1.5">10. Classificação de risco</label> <select id="rid-classificacao" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]" required> <option value="">Selecione</option> <option value="Baixo">Baixo</option> <option value="Médio">Médio</option> <option value="Alto">Alto</option> <option value="Crítico">Crítico</option> </select>
       </div>
@@ -444,16 +444,16 @@
        </div>
       </div>
       <div class="grid grid-cols-2 gap-4">
-       <div><label for="edit-origem" class="block text-sm font-medium mb-1.5">Origem da Detecç��o</label> <select id="edit-origem" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]"> <option value="CSL">CSL</option> <option value="Inspeção programada">Inspeção programada</option> <option value="Inspeção não programada">Inspe����o não programada</option> <option value="Observação Comportamental">Observação Comportamental</option> <option value="Constatação espontânea">Constatação espontânea</option> <option value="Auditoria">Auditoria</option> </select>
+       <div><label for="edit-origem" class="block text-sm font-medium mb-1.5">Origem da Detecção</label> <select id="edit-origem" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]"> <option value="CSL">CSL</option> <option value="Inspeção programada">Inspeção programada</option> <option value="Inspeção não programada">Inspeção não programada</option> <option value="Observação Comportamental">Observação Comportamental</option> <option value="Constatação espontânea">Constatação espontânea</option> <option value="Auditoria">Auditoria</option> </select>
        </div>
-       <div><label for="edit-classificacao" class="block text-sm font-medium mb-1.5">Classificação de Risco</label> <select id="edit-classificacao" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]"> <option value="Baixo">Baixo</option> <option value="M��dio">Médio</option> <option value="Alto">Alto</option> <option value="Crítico">Crítico</option> </select>
+       <div><label for="edit-classificacao" class="block text-sm font-medium mb-1.5">Classificação de Risco</label> <select id="edit-classificacao" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]"> <option value="Baixo">Baixo</option> <option value="Médio">Médio</option> <option value="Alto">Alto</option> <option value="Crítico">Crítico</option> </select>
        </div>
       </div>
       <div><label for="edit-descricao" class="block text-sm font-medium mb-1.5">Descrição</label> <textarea id="edit-descricao" rows="3" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df] resize-none"></textarea>
       </div>
       <div><label for="edit-acao-imediata" class="block text-sm font-medium mb-1.5">Ação Imediata</label> <textarea id="edit-acao-imediata" rows="3" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df] resize-none"></textarea>
       </div>
-      <div><label for="edit-acoes-corretivas" class="block text-sm font-medium mb-1.5">Aç��es Corretivas</label> <textarea id="edit-acoes-corretivas" rows="3" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df] resize-none"></textarea>
+      <div><label for="edit-acoes-corretivas" class="block text-sm font-medium mb-1.5">Ações Corretivas</label> <textarea id="edit-acoes-corretivas" rows="3" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df] resize-none"></textarea>
       </div>
       <div class="grid grid-cols-2 gap-4">
        <div><label for="edit-responsavel" class="block text-sm font-medium mb-1.5">Responsável pelas Ações</label> <input id="edit-responsavel" type="text" class="block w-full px-3 py-2.5 rounded-xl border border-[#b0b0b0] bg-[#ece5df]">
@@ -474,7 +474,7 @@
     </div>
    </div>
    <footer class="w-full flex-shrink-0 bg-[#d6d6d4] border-t border-[#b0b0b0]">
-    <div class="max-w-6xl mx-auto px-4 py-2 text-center text-[11px] text-[#5a5a5a]"><span>�������� J. DEMITO | Todos os direitos reservados. Desenvolvido por Juan Carlos</span>
+    <div class="max-w-6xl mx-auto px-4 py-2 text-center text-[11px] text-[#5a5a5a]"><span>© J. DEMITO | Todos os direitos reservados. Desenvolvido por Juan Carlos</span>
     </div>
    </footer>
   </main>
@@ -762,7 +762,7 @@
       }
 
       if (funcionarios.length === 0) {
-        container.innerHTML = '<div class="rounded-2xl bg-white border border-[#b0b0b0] px-5 py-8 text-center"><p class="text-sm text-[#5a5a5a]">Nenhum funcion��������rio encontrado</p></div>';
+        container.innerHTML = '<div class="rounded-2xl bg-white border border-[#b0b0b0] px-5 py-8 text-center"><p class="text-sm text-[#5a5a5a]">Nenhum funcionário encontrado</p></div>';
         return;
       }
 
@@ -1119,7 +1119,7 @@
               <option value="Baixo" ${rid.classificacao_risco === 'Baixo' ? 'selected' : ''}>Baixo</option>
               <option value="Médio" ${rid.classificacao_risco === 'Médio' ? 'selected' : ''}>Médio</option>
               <option value="Alto" ${rid.classificacao_risco === 'Alto' ? 'selected' : ''}>Alto</option>
-              <option value="Crítico" ${rid.classificacao_risco === 'Cr��������tico' ? 'selected' : ''}>Crítico</option>
+              <option value="Crítico" ${rid.classificacao_risco === 'Crítico' ? 'selected' : ''}>Crítico</option>
             </select>
           </div>
 
@@ -1566,7 +1566,7 @@
     msg.textContent = '';
     
     try {
-      // Obter próximo n��mero de RID
+      // Obter próximo numero de RID
       const ridsRef = collection(db, 'rids');
       const q = query(ridsRef, orderBy('ridNumber', 'desc'));
       const snapshot = await getDocs(q);
